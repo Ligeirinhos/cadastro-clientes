@@ -5,11 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Insalata Saladas</title>
     <link rel="manifest" href="data:application/json,{}">
-    <meta name="theme-color" content="#000000">
+    <meta name="theme-color" content="#7c3aed">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-title" content="Insalata">
-    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23000' width='100' height='100' rx='20'/><circle cx='50' cy='38' r='16' fill='white'/><ellipse cx='50' cy='78' rx='28' ry='22' fill='white'/></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%237c3aed' width='100' height='100' rx='20'/><circle cx='50' cy='38' r='16' fill='white'/><ellipse cx='50' cy='78' rx='28' ry='22' fill='white'/></svg>">
 
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -17,82 +17,86 @@
 
     <style>
         :root {
+            --primary: #7c3aed;
+            --primary-hover: #6d28d9;
+            --primary-light: #ede9fe;
+            --primary-text: #ffffff;
             --bg: #ffffff;
-            --bg-secondary: #f5f5f5;
+            --bg-secondary: #f5f3ff;
             --text: #1a1a1a;
             --text-secondary: #666;
-            --border: #e0e0e0;
-            --accent: #000;
-            --accent-text: #fff;
-            --danger: #c00;
+            --border: #e0d5f0;
             --card: #fff;
-            --shadow: 0 1px 3px rgba(0,0,0,0.1);
+            --shadow: 0 2px 8px rgba(124,58,237,0.08);
             --input-bg: #fff;
-            --radius: 8px;
+            --radius: 10px;
+            --danger: #c00;
         }
 
         @media (prefers-color-scheme: dark) {
             :root {
+                --primary: #a78bfa;
+                --primary-hover: #8b5cf6;
+                --primary-light: #2e1065;
+                --primary-text: #1e1b4b;
                 --bg: #121212;
-                --bg-secondary: #1e1e1e;
+                --bg-secondary: #1e1e2f;
                 --text: #e0e0e0;
                 --text-secondary: #aaa;
                 --border: #333;
-                --card: #1e1e1e;
-                --shadow: 0 1px 3px rgba(0,0,0,0.4);
-                --input-bg: #2a2a2a;
+                --card: #1e1e2f;
+                --shadow: 0 2px 8px rgba(0,0,0,0.4);
+                --input-bg: #2a2a3a;
             }
         }
 
         * { margin:0; padding:0; box-sizing:border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-            -webkit-tap-highlight-color: transparent;
+            background: var(--bg); color: var(--text);
+            min-height: 100vh; -webkit-tap-highlight-color: transparent;
         }
         .app-container { max-width:500px; margin:0 auto; display:flex; flex-direction:column; min-height:100vh; }
 
         .header {
-            background:#000; color:#fff; padding:12px 16px;
-            display:flex; align-items:center; justify-content:space-between;
+            background: var(--primary); color: var(--primary-text);
+            padding:12px 16px; display:flex; align-items:center; justify-content:space-between;
             position:sticky; top:0; z-index:100;
         }
         .header-title { font-size:1.1rem; font-weight:700; }
-        .header-btn { background:rgba(255,255,255,0.15); color:#fff; border:none; width:36px; height:36px; border-radius:50%; font-size:1.2rem; cursor:pointer; }
+        .header-btn { background:rgba(255,255,255,0.2); color:inherit; border:none; width:36px; height:36px; border-radius:50%; font-size:1.2rem; cursor:pointer; }
 
         .tabs {
-            display:flex; background:var(--bg-secondary);
+            display:flex; background: var(--bg-secondary);
             position:sticky; top:52px; z-index:90;
         }
         .tab {
             flex:1; text-align:center; padding:12px;
             font-weight:600; font-size:0.9rem; border-bottom:2px solid transparent;
-            cursor:pointer; transition:0.2s;
+            cursor:pointer; transition:0.2s; color: var(--text-secondary);
         }
-        .tab.active { border-bottom-color:#000; }
+        .tab.active { border-bottom-color: var(--primary); color: var(--primary); }
 
         .content { flex:1; padding:12px 12px 80px; }
 
         .search-box {
             width:100%; padding:10px 16px 10px 40px; border:2px solid var(--border);
             border-radius:24px; font-size:0.95rem; background:var(--input-bg);
-            background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2.5'><circle cx='11' cy='11' r='8'/><line x1='21' y1='21' x2='16.65' y2='16.65'/></svg>");
+            background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%237c3aed' stroke-width='2.5'><circle cx='11' cy='11' r='8'/><line x1='21' y1='21' x2='16.65' y2='16.65'/></svg>");
             background-repeat:no-repeat; background-position:14px center;
         }
-        .stats { font-size:0.85rem; color:var(--text-secondary); margin:8px 0; }
+        .stats { font-size:0.85rem; color: var(--text-secondary); margin:8px 0; }
 
         .client-list, .entrega-list { display:flex; flex-direction:column; gap:8px; }
         .client-row, .entrega-row {
             background:var(--card); border:1px solid var(--border);
-            border-radius:var(--radius); padding:12px;
-            display:flex; align-items:center; gap:10px;
+            border-radius:var(--radius); padding:14px;
+            display:flex; align-items:center; gap:12px;
             box-shadow:var(--shadow); cursor:pointer;
         }
-        .checkbox { width:20px; height:20px; accent-color:#000; flex-shrink:0; }
+        .checkbox { width:20px; height:20px; accent-color: var(--primary); flex-shrink:0; }
         .info { flex:1; min-width:0; }
-        .name { font-weight:600; font-size:0.95rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .name { font-weight:600; font-size:0.95rem; }
         .detail { font-size:0.8rem; color:var(--text-secondary); }
         .badge { font-size:0.7rem; padding:2px 8px; border-radius:12px; font-weight:600; }
         .badge-pendente { background:#fff3cd; color:#856404; }
@@ -101,8 +105,8 @@
         .fab {
             position:fixed; bottom:24px; right:24px;
             width:56px; height:56px; border-radius:50%;
-            background:#000; color:#fff; border:none;
-            font-size:1.8rem; cursor:pointer; box-shadow:0 4px 16px rgba(0,0,0,0.3);
+            background: var(--primary); color: #fff; border:none;
+            font-size:1.8rem; cursor:pointer; box-shadow:0 4px 16px rgba(124,58,237,0.4);
             z-index:200;
         }
 
@@ -118,18 +122,18 @@
         .modal-handle { width:36px; height:4px; background:#ccc; border-radius:2px; margin:12px auto 8px; }
         .modal-content { padding:0 20px 20px; }
         .form-group { margin-bottom:14px; }
-        .form-label { display:block; font-size:0.75rem; font-weight:600; color:#888; margin-bottom:4px; text-transform:uppercase; }
+        .form-label { display:block; font-size:0.75rem; font-weight:600; color:var(--text-secondary); margin-bottom:4px; text-transform:uppercase; }
         .form-input, .form-textarea {
             width:100%; padding:12px; border:2px solid var(--border);
             border-radius:var(--radius); font-size:0.95rem; background:var(--input-bg);
         }
         .btn { padding:12px; border-radius:var(--radius); font-weight:600; cursor:pointer; border:none; width:100%; font-size:0.95rem; }
-        .btn-black { background:#000; color:#fff; }
-        .btn-outline { background:transparent; border:2px solid #000; }
-        .btn-danger { background:transparent; border:2px solid #c00; color:#c00; }
+        .btn-primary { background: var(--primary); color: #fff; }
+        .btn-outline { background:transparent; border:2px solid var(--primary); color: var(--primary); }
+        .btn-danger { background:transparent; border:2px solid var(--danger); color: var(--danger); }
         .toast {
             position:fixed; bottom:90px; left:50%; transform:translateX(-50%);
-            background:#000; color:#fff; padding:10px 22px; border-radius:20px;
+            background: var(--primary); color: #fff; padding:10px 22px; border-radius:20px;
             font-size:0.85rem; z-index:500;
         }
     </style>
@@ -196,7 +200,8 @@
             });
         const hoje = new Date().toISOString().slice(0,10);
         unsubscribeEntregas = db.collection('users').doc(uid).collection('entregas')
-            .where('data', '==', hoje).orderBy('createdAt')
+            .where('data', '==', hoje)
+            .orderBy('criadoEm', 'asc')   // agora campo local preenchido
             .onSnapshot(snap => {
                 allEntregas = snap.docs.map(d => ({id: d.id, ...d.data()}));
                 if (currentTab === 'entregas') renderEntregas();
@@ -207,12 +212,12 @@
         document.getElementById('contentArea').innerHTML = `
             <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;gap:20px;">
                 <div style="font-size:4rem;">🥗</div>
-                <h2>Insalata Saladas</h2>
+                <h2 style="color:var(--primary);">Insalata Saladas</h2>
                 <div style="width:100%;max-width:300px;display:flex;flex-direction:column;gap:12px;">
                     <input id="loginEmail" placeholder="Email" class="form-input">
                     <input id="loginPassword" type="password" placeholder="Senha" class="form-input">
-                    <button class="btn btn-black" onclick="handleLogin()">Entrar</button>
-                    <span style="text-align:center;font-size:0.85rem;cursor:pointer;" onclick="handleRegister()">Criar conta</span>
+                    <button class="btn btn-primary" onclick="handleLogin()">Entrar</button>
+                    <span style="text-align:center;font-size:0.85rem;cursor:pointer;color:var(--primary);" onclick="handleRegister()">Criar conta</span>
                 </div>
             </div>`;
     }
@@ -236,7 +241,9 @@
 
     function switchTab(tab) {
         currentTab = tab;
-        document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', (i===0 && tab==='clientes')||(i===1 && tab==='entregas')));
+        document.querySelectorAll('.tab').forEach((t,i) => {
+            t.classList.toggle('active', (i===0 && tab==='clientes') || (i===1 && tab==='entregas'));
+        });
         if (tab==='clientes') renderClientes();
         else renderEntregas();
     }
@@ -255,7 +262,7 @@
             const s = search.trim().toLowerCase();
             filtered = allClients.filter(c => c.nome.toLowerCase().includes(s) || (c.telefone||'').includes(s));
         }
-        if (filtered.length===0) html += `<div style="text-align:center;color:#999;">Nenhum cliente.</div>`;
+        if (filtered.length===0) html += `<div style="text-align:center;color:var(--text-secondary);">Nenhum cliente.</div>`;
         filtered.forEach(c => {
             html += `
                 <div class="client-row">
@@ -266,7 +273,7 @@
                     </div>
                 </div>`;
         });
-        html += `</div><button class="btn btn-black" style="margin-top:12px;" onclick="criarEntregas()">➕ Criar Entregas</button>`;
+        html += `</div><button class="btn btn-primary" style="margin-top:12px;" onclick="criarEntregas()">➕ Criar Entregas</button>`;
         document.getElementById('contentArea').innerHTML = html;
     }
 
@@ -274,6 +281,7 @@
         const checks = document.querySelectorAll('.checkbox:checked');
         if (checks.length===0) return showToast('Selecione ao menos um cliente.');
         const hoje = new Date().toISOString().slice(0,10);
+        const criadoEm = new Date().toISOString(); // timestamp local imediato
         const uid = currentUser.uid;
         const batch = db.batch();
         let count = 0;
@@ -295,6 +303,7 @@
                 troco: '',
                 status: 'pendente',
                 data: hoje,
+                criadoEm: criadoEm,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
             count++;
@@ -322,7 +331,7 @@
                 </div>`;
         });
         html += `</div>
-            <button class="btn btn-black" style="margin-top:12px;" onclick="gerarRota()">🗺️ Rota</button>
+            <button class="btn btn-primary" style="margin-top:12px;" onclick="gerarRota()">🗺️ Rota</button>
             <button class="btn btn-outline" style="margin-top:8px;" onclick="marcarEntregues()">✅ Marcar Entregues</button>`;
         document.getElementById('contentArea').innerHTML = html;
     }
@@ -358,7 +367,7 @@
     function openNewClientModal() {
         showModal(`
             <div class="modal-handle"></div><div class="modal-content">
-                <h3>Novo Cliente</h3>
+                <h3 style="color:var(--primary);">Novo Cliente</h3>
                 <div class="form-group"><label class="form-label">Nome *</label><input class="form-input" id="cNome"></div>
                 <div class="form-group"><label class="form-label">Telefone</label><input class="form-input" id="cTel"></div>
                 <div class="form-group"><label class="form-label">Endereço Residencial</label><input class="form-input" id="cEnd"></div>
@@ -366,7 +375,7 @@
                 <div class="form-group"><label class="form-label">Endereço Trabalho</label><input class="form-input" id="cEndTrab"></div>
                 <div class="form-group"><label class="form-label">Complemento Trab.</label><input class="form-input" id="cCompTrab"></div>
                 <div class="form-group"><label class="form-label">Taxa de Entrega (R$)</label><input class="form-input" type="number" step="0.01" id="cTaxa" value="0"></div>
-                <button class="btn btn-black" onclick="saveNewClient()">Salvar</button>
+                <button class="btn btn-primary" onclick="saveNewClient()">Salvar</button>
                 <button class="btn btn-outline" style="margin-top:6px;" onclick="closeModal()">Cancelar</button>
             </div>`);
     }
@@ -389,7 +398,7 @@
         const c = allClients.find(c=>c.id===id); if(!c) return;
         showModal(`
             <div class="modal-handle"></div><div class="modal-content">
-                <h3>Editar Cliente</h3>
+                <h3 style="color:var(--primary);">Editar Cliente</h3>
                 <div class="form-group"><label class="form-label">Nome</label><input class="form-input" id="eNome" value="${c.nome||''}"></div>
                 <div class="form-group"><label class="form-label">Telefone</label><input class="form-input" id="eTel" value="${c.telefone||''}"></div>
                 <div class="form-group"><label class="form-label">Endereço</label><input class="form-input" id="eEnd" value="${c.endereco||''}"></div>
@@ -397,7 +406,7 @@
                 <div class="form-group"><label class="form-label">End. Trabalho</label><input class="form-input" id="eEndTrab" value="${c.enderecoTrabalho||''}"></div>
                 <div class="form-group"><label class="form-label">Comp. Trab.</label><input class="form-input" id="eCompTrab" value="${c.complementoTrabalho||''}"></div>
                 <div class="form-group"><label class="form-label">Taxa de Entrega (R$)</label><input class="form-input" type="number" step="0.01" id="eTaxa" value="${c.taxaEntrega||0}"></div>
-                <button class="btn btn-black" onclick="updateClient('${id}')">Salvar</button>
+                <button class="btn btn-primary" onclick="updateClient('${id}')">Salvar</button>
                 <button class="btn btn-danger" style="margin-top:6px;" onclick="deleteClient('${id}')">Excluir</button>
                 <button class="btn btn-outline" style="margin-top:6px;" onclick="closeModal()">Cancelar</button>
             </div>`);
@@ -426,7 +435,7 @@
         let opts = allClients.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
         showModal(`
             <div class="modal-handle"></div><div class="modal-content">
-                <h3>Nova Entrega</h3>
+                <h3 style="color:var(--primary);">Nova Entrega</h3>
                 <div class="form-group"><label class="form-label">Cliente</label>
                     <select class="form-input" id="selCliente" onchange="preencherTaxa()">${opts}</select>
                 </div>
@@ -440,10 +449,9 @@
                     </select>
                 </div>
                 <div class="form-group" id="grupoTroco"><label class="form-label">Troco (R$)</label><input class="form-input" type="number" step="0.01" id="entregaTroco"></div>
-                <button class="btn btn-black" onclick="saveNovaEntrega()">Salvar Entrega</button>
+                <button class="btn btn-primary" onclick="saveNovaEntrega()">Salvar Entrega</button>
                 <button class="btn btn-outline" style="margin-top:6px;" onclick="closeModal()">Cancelar</button>
             </div>`);
-        // Preencher taxa automaticamente ao abrir
         setTimeout(preencherTaxa, 100);
     }
 
@@ -466,6 +474,7 @@
         const cliente = allClients.find(c=>c.id===cid);
         if (!cliente) return;
         const hoje = new Date().toISOString().slice(0,10);
+        const criadoEm = new Date().toISOString();
         await db.collection('users').doc(currentUser.uid).collection('entregas').add({
             clienteId: cid,
             nome: cliente.nome,
@@ -479,6 +488,7 @@
             troco: document.getElementById('entregaTroco')?.value||'',
             status: 'pendente',
             data: hoje,
+            criadoEm: criadoEm,
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
         closeModal(); showToast('Entrega adicionada!');
@@ -488,7 +498,7 @@
         const e = allEntregas.find(e=>e.id===id); if (!e) return;
         showModal(`
             <div class="modal-handle"></div><div class="modal-content">
-                <h3>Editar Entrega</h3>
+                <h3 style="color:var(--primary);">Editar Entrega</h3>
                 <div class="form-group"><label class="form-label">Endereço</label>
                     <select class="form-input" id="editEndereco">
                         <option value="residencial" ${e.enderecoSelecionado==='residencial'?'selected':''}>Residencial</option>
@@ -504,7 +514,7 @@
                     </select>
                 </div>
                 <div class="form-group"><label class="form-label">Troco</label><input class="form-input" type="number" step="0.01" id="editTroco" value="${e.troco||''}"></div>
-                <button class="btn btn-black" onclick="updateEntrega('${id}')">Salvar</button>
+                <button class="btn btn-primary" onclick="updateEntrega('${id}')">Salvar</button>
                 <button class="btn btn-danger" style="margin-top:6px;" onclick="deleteEntrega('${id}')">Excluir</button>
                 <button class="btn btn-outline" style="margin-top:6px;" onclick="closeModal()">Cancelar</button>
             </div>`);
@@ -526,7 +536,6 @@
         closeModal(); showToast('Entrega removida.');
     }
 
-    // ======== UTILITÁRIOS ========
     function showModal(html) {
         const overlay = document.createElement('div'); overlay.className='modal-overlay'; overlay.id='modalOverlay';
         overlay.innerHTML = `<div class="modal-sheet">${html}</div>`;
