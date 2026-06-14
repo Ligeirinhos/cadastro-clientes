@@ -3,1284 +3,535 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Cadastro de Clientes</title>
+    <title>Insalata Saladas</title>
     <link rel="manifest" href="data:application/json,{}">
     <meta name="theme-color" content="#000000">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <meta name="apple-mobile-web-app-title" content="Clientes">
+    <meta name="apple-mobile-web-app-title" content="Insalata">
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23000' width='100' height='100' rx='20'/><circle cx='50' cy='38' r='16' fill='white'/><ellipse cx='50' cy='78' rx='28' ry='22' fill='white'/></svg>">
 
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js">
-    </script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js">
-    </script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
     <style>
         :root {
             --bg: #ffffff;
             --bg-secondary: #f5f5f5;
             --text: #1a1a1a;
-            --text-secondary: #666666;
+            --text-secondary: #666;
             --border: #e0e0e0;
-            --accent: #000000;
-            --accent-text: #ffffff;
-            --danger: #cc0000;
-            --danger-bg: #fff0f0;
-            --card-bg: #ffffff;
-            --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            --shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.15);
-            --input-bg: #ffffff;
+            --accent: #000;
+            --accent-text: #fff;
+            --danger: #c00;
+            --card: #fff;
+            --shadow: 0 1px 3px rgba(0,0,0,0.1);
+            --input-bg: #fff;
             --radius: 8px;
-            --transition: 0.2s ease;
-            --font-size-sm: 0.85rem;
-            --font-size-md: 0.95rem;
-            --font-size-lg: 1.1rem;
-            --font-size-xl: 1.5rem;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-            min-height: 100dvh;
-            -webkit-tap-highlight-color: transparent;
-            -webkit-font-smoothing: antialiased;
-            line-height: 1.5;
-        }
-
-        .app-container {
-            max-width: 500px;
-            margin: 0 auto;
-            min-height: 100vh;
-            min-height: 100dvh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .header {
-            background: #000;
-            color: #fff;
-            padding: 12px 16px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            gap: 10px;
-            min-height: 52px;
-        }
-
-        .header-title {
-            font-size: var(--font-size-lg);
-            font-weight: 700;
-            letter-spacing: -0.3px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .header-btn {
-            background: rgba(255, 255, 255, 0.15);
-            color: #fff;
-            border: none;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 1.2rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all var(--transition);
-            flex-shrink: 0;
-        }
-        .header-btn:active {
-            background: rgba(255, 255, 255, 0.3);
-            transform: scale(0.93);
-        }
-
-        .content {
-            flex: 1;
-            padding: 12px;
-            padding-bottom: 80px;
-        }
-
-        .login-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 80vh;
-            min-height: 80dvh;
-            padding: 20px;
-            gap: 20px;
-        }
-        .login-icon {
-            font-size: 4rem;
-            margin-bottom: 8px;
-        }
-        .login-title {
-            font-size: var(--font-size-xl);
-            font-weight: 700;
-            color: #000;
-        }
-        .login-form {
-            width: 100%;
-            max-width: 340px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-        .login-form input {
-            width: 100%;
-            padding: 14px 16px;
-            border: 2px solid var(--border);
-            border-radius: var(--radius);
-            font-size: var(--font-size-md);
-            background: var(--input-bg);
-            transition: all var(--transition);
-            outline: none;
-        }
-        .login-form input:focus {
-            border-color: #000;
-            box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08);
-        }
-        .btn-login {
-            background: #000;
-            color: #fff;
-            border: none;
-            padding: 14px;
-            border-radius: var(--radius);
-            font-size: var(--font-size-md);
-            font-weight: 600;
-            cursor: pointer;
-            letter-spacing: 0.3px;
-            transition: all var(--transition);
-        }
-        .btn-login:active {
-            background: #333;
-            transform: scale(0.97);
-        }
-        .login-link {
-            color: #666;
-            font-size: var(--font-size-sm);
-            cursor: pointer;
-            text-decoration: underline;
-            text-align: center;
-        }
-
-        .search-container {
-            margin-bottom: 14px;
-        }
-        .search-input {
-            width: 100%;
-            padding: 12px 16px;
-            padding-left: 40px;
-            border: 2px solid var(--border);
-            border-radius: 24px;
-            font-size: var(--font-size-md);
-            background: var(--input-bg);
-            outline: none;
-            transition: all var(--transition);
-            background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2.5'><circle cx='11' cy='11' r='8'/><line x1='21' y1='21' x2='16.65' y2='16.65'/></svg>");
-            background-repeat: no-repeat;
-            background-position: 14px center;
-        }
-        .search-input:focus {
-            border-color: #000;
-            box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06);
-        }
-
-        .stats {
-            font-size: var(--font-size-sm);
-            color: var(--text-secondary);
-            margin-bottom: 12px;
-            padding: 0 4px;
-        }
-
-        .client-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-        .client-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 14px;
-            cursor: pointer;
-            transition: all var(--transition);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            box-shadow: var(--shadow);
-            position: relative;
-        }
-        .client-card:active {
-            background: #f9f9f9;
-            border-color: #ccc;
-            transform: scale(0.985);
-        }
-        .client-thumb {
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            background: #e8e8e8;
-            flex-shrink: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.3rem;
-            overflow: hidden;
-            border: 2px solid #eee;
-        }
-        .client-thumb img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .client-info {
-            flex: 1;
-            min-width: 0;
-        }
-        .client-name {
-            font-weight: 600;
-            font-size: var(--font-size-md);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .client-extra {
-            font-size: var(--font-size-sm);
-            color: var(--text-secondary);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .client-ficha {
-            font-size: 0.75rem;
-            color: #999;
-            font-weight: 500;
-            flex-shrink: 0;
-            min-width: 38px;
-            text-align: right;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            color: #999;
-        }
-        .empty-state span {
-            font-size: 3rem;
-            display: block;
-            margin-bottom: 10px;
-        }
-
-        .fab {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
-            background: #000;
-            color: #fff;
-            border: none;
-            font-size: 1.8rem;
-            cursor: pointer;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-            transition: all var(--transition);
-            z-index: 200;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            line-height: 1;
-        }
-        .fab:active {
-            background: #333;
-            transform: scale(0.9);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-        }
-
-        .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.6);
-            z-index: 300;
-            display: flex;
-            align-items: flex-end;
-            justify-content: center;
-            animation: fadeIn 0.2s ease;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        .modal-sheet {
-            background: #fff;
-            width: 100%;
-            max-width: 500px;
-            max-height: 92vh;
-            max-height: 92dvh;
-            border-radius: 16px 16px 0 0;
-            overflow-y: auto;
-            animation: slideUp 0.25s ease;
-            padding-bottom: 24px;
-        }
-        @keyframes slideUp {
-            from { transform: translateY(100%); }
-            to { transform: translateY(0); }
-        }
-        .modal-handle {
-            width: 36px;
-            height: 4px;
-            background: #ccc;
-            border-radius: 2px;
-            margin: 12px auto 8px;
-        }
-        .modal-content {
-            padding: 0 20px 20px;
-        }
-        .modal-title {
-            font-size: var(--font-size-lg);
-            font-weight: 700;
-            margin-bottom: 18px;
-            text-align: center;
-        }
-        .form-group {
-            margin-bottom: 14px;
-        }
-        .form-label {
-            display: block;
-            font-size: var(--font-size-sm);
-            font-weight: 600;
-            color: #555;
-            margin-bottom: 4px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .form-input,
-        .form-textarea {
-            width: 100%;
-            padding: 12px 14px;
-            border: 2px solid var(--border);
-            border-radius: var(--radius);
-            font-size: var(--font-size-md);
-            background: var(--input-bg);
-            outline: none;
-            transition: all var(--transition);
-            font-family: inherit;
-            resize: vertical;
-        }
-        .form-input:focus,
-        .form-textarea:focus {
-            border-color: #000;
-            box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06);
-        }
-        .form-textarea {
-            min-height: 70px;
-        }
-        .form-row {
-            display: flex;
-            gap: 10px;
-        }
-        .form-row .form-group {
-            flex: 1;
-        }
-        .photo-area {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            flex-wrap: wrap;
-        }
-        .photo-preview {
-            width: 70px;
-            height: 70px;
-            border-radius: 50%;
-            background: #f0f0f0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-            border: 2px dashed #ccc;
-            overflow: hidden;
-            flex-shrink: 0;
-            cursor: pointer;
-            transition: all var(--transition);
-        }
-        .photo-preview:active {
-            border-color: #000;
-            background: #f5f5f5;
-        }
-        .photo-preview img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .photo-actions {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-        .btn-photo {
-            padding: 10px 16px;
-            border: 2px solid #000;
-            background: #fff;
-            color: #000;
-            border-radius: var(--radius);
-            font-size: var(--font-size-sm);
-            font-weight: 600;
-            cursor: pointer;
-            transition: all var(--transition);
-            white-space: nowrap;
-        }
-        .btn-photo:active {
-            background: #000;
-            color: #fff;
-        }
-        .btn-photo-danger {
-            border-color: #ccc;
-            color: #999;
-            background: #fff;
-        }
-        .btn-photo-danger:active {
-            background: #fee;
-            border-color: #c00;
-            color: #c00;
-        }
-        .btn-save {
-            width: 100%;
-            padding: 14px;
-            background: #000;
-            color: #fff;
-            border: none;
-            border-radius: var(--radius);
-            font-size: var(--font-size-md);
-            font-weight: 700;
-            cursor: pointer;
-            letter-spacing: 0.3px;
-            transition: all var(--transition);
-            margin-top: 8px;
-        }
-        .btn-save:active {
-            background: #333;
-            transform: scale(0.97);
-        }
-        .btn-delete {
-            width: 100%;
-            padding: 12px;
-            background: #fff;
-            color: #c00;
-            border: 2px solid #c00;
-            border-radius: var(--radius);
-            font-size: var(--font-size-sm);
-            font-weight: 600;
-            cursor: pointer;
-            margin-top: 6px;
-            transition: all var(--transition);
-        }
-        .btn-delete:active {
-            background: #fee;
-        }
-        .btn-cancel {
-            width: 100%;
-            padding: 12px;
-            background: #fff;
-            color: #666;
-            border: 2px solid #ddd;
-            border-radius: var(--radius);
-            font-size: var(--font-size-sm);
-            font-weight: 600;
-            cursor: pointer;
-            margin-top: 6px;
-            transition: all var(--transition);
-        }
-        .btn-cancel:active {
-            background: #f5f5f5;
-        }
-        .detail-photo {
-            width: 90px;
-            height: 90px;
-            border-radius: 50%;
-            background: #f0f0f0;
-            margin: 0 auto 16px;
-            overflow: hidden;
-            border: 3px solid #eee;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2.5rem;
-        }
-        .detail-photo img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .detail-field {
-            margin-bottom: 10px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #f0f0f0;
-        }
-        .detail-label {
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            color: #999;
-            font-weight: 600;
-        }
-        .detail-value {
-            font-size: var(--font-size-md);
-            color: #1a1a1a;
-            word-break: break-word;
-        }
-
-        .loading-spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-top-color: #fff;
-            border-radius: 50%;
-            animation: spin 0.6s linear infinite;
-            margin-right: 8px;
-            vertical-align: middle;
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .toast {
-            position: fixed;
-            bottom: 90px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #000;
-            color: #fff;
-            padding: 10px 22px;
-            border-radius: 20px;
-            font-size: var(--font-size-sm);
-            font-weight: 600;
-            z-index: 500;
-            animation: toastIn 0.3s ease;
-            pointer-events: none;
-        }
-        @keyframes toastIn {
-            from { opacity: 0; transform: translateX(-50%) translateY(10px); }
-            to { opacity: 1; transform: translateX(-50%) translateY(0); }
-        }
-
-        /* ===== TEMA ESCURO AUTOMÁTICO ===== */
         @media (prefers-color-scheme: dark) {
             :root {
                 --bg: #121212;
                 --bg-secondary: #1e1e1e;
                 --text: #e0e0e0;
-                --text-secondary: #a0a0a0;
-                --border: #333333;
-                --accent: #ffffff;
-                --accent-text: #000000;
-                --danger: #ff4444;
-                --danger-bg: #2a1a1a;
-                --card-bg: #1e1e1e;
-                --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-                --shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.5);
+                --text-secondary: #aaa;
+                --border: #333;
+                --card: #1e1e1e;
+                --shadow: 0 1px 3px rgba(0,0,0,0.4);
                 --input-bg: #2a2a2a;
             }
+        }
 
-            body {
-                background: var(--bg);
-                color: var(--text);
-            }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .app-container { max-width:500px; margin:0 auto; display:flex; flex-direction:column; min-height:100vh; }
 
-            .login-title {
-                color: #fff;
-            }
+        .header {
+            background:#000; color:#fff; padding:12px 16px;
+            display:flex; align-items:center; justify-content:space-between;
+            position:sticky; top:0; z-index:100;
+        }
+        .header-title { font-size:1.1rem; font-weight:700; }
+        .header-btn { background:rgba(255,255,255,0.15); color:#fff; border:none; width:36px; height:36px; border-radius:50%; font-size:1.2rem; cursor:pointer; }
 
-            .login-form input {
-                background: #2a2a2a;
-                color: #fff;
-                border-color: #444;
-            }
+        .tabs {
+            display:flex; background:var(--bg-secondary);
+            position:sticky; top:52px; z-index:90;
+        }
+        .tab {
+            flex:1; text-align:center; padding:12px;
+            font-weight:600; font-size:0.9rem; border-bottom:2px solid transparent;
+            cursor:pointer; transition:0.2s;
+        }
+        .tab.active { border-bottom-color:#000; }
 
-            .login-form input:focus {
-                border-color: #fff;
-            }
+        .content { flex:1; padding:12px 12px 80px; }
 
-            .btn-login {
-                background: #fff;
-                color: #000;
-            }
+        .search-box {
+            width:100%; padding:10px 16px 10px 40px; border:2px solid var(--border);
+            border-radius:24px; font-size:0.95rem; background:var(--input-bg);
+            background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2.5'><circle cx='11' cy='11' r='8'/><line x1='21' y1='21' x2='16.65' y2='16.65'/></svg>");
+            background-repeat:no-repeat; background-position:14px center;
+        }
+        .stats { font-size:0.85rem; color:var(--text-secondary); margin:8px 0; }
 
-            .search-input {
-                background: #2a2a2a;
-                color: #fff;
-                border-color: #444;
-                background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%23aaa' stroke-width='2.5'><circle cx='11' cy='11' r='8'/><line x1='21' y1='21' x2='16.65' y2='16.65'/></svg>");
-            }
+        .client-list, .entrega-list { display:flex; flex-direction:column; gap:8px; }
+        .client-row, .entrega-row {
+            background:var(--card); border:1px solid var(--border);
+            border-radius:var(--radius); padding:12px;
+            display:flex; align-items:center; gap:10px;
+            box-shadow:var(--shadow); cursor:pointer;
+        }
+        .checkbox { width:20px; height:20px; accent-color:#000; flex-shrink:0; }
+        .info { flex:1; min-width:0; }
+        .name { font-weight:600; font-size:0.95rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .detail { font-size:0.8rem; color:var(--text-secondary); }
+        .badge { font-size:0.7rem; padding:2px 8px; border-radius:12px; font-weight:600; }
+        .badge-pendente { background:#fff3cd; color:#856404; }
+        .badge-entregue { background:#d4edda; color:#155724; }
 
-            .client-card {
-                background: #1e1e1e;
-                border-color: #333;
-            }
+        .fab {
+            position:fixed; bottom:24px; right:24px;
+            width:56px; height:56px; border-radius:50%;
+            background:#000; color:#fff; border:none;
+            font-size:1.8rem; cursor:pointer; box-shadow:0 4px 16px rgba(0,0,0,0.3);
+            z-index:200;
+        }
 
-            .client-thumb {
-                background: #333;
-                border-color: #444;
-            }
-
-            .empty-state {
-                color: #888;
-            }
-
-            .fab {
-                background: #fff;
-                color: #000;
-            }
-
-            .modal-sheet {
-                background: #1e1e1e;
-            }
-
-            .modal-handle {
-                background: #555;
-            }
-
-            .form-input, .form-textarea {
-                background: #2a2a2a;
-                color: #fff;
-                border-color: #444;
-            }
-
-            .form-input:focus, .form-textarea:focus {
-                border-color: #fff;
-            }
-
-            .form-label {
-                color: #aaa;
-            }
-
-            .btn-photo {
-                background: #2a2a2a;
-                color: #fff;
-                border-color: #fff;
-            }
-
-            .btn-save {
-                background: #fff;
-                color: #000;
-            }
-
-            .btn-delete {
-                background: #2a1a1a;
-                color: #ff4444;
-                border-color: #ff4444;
-            }
-
-            .btn-cancel {
-                background: transparent;
-                color: #aaa;
-                border-color: #555;
-            }
-
-            .detail-field {
-                border-bottom-color: #333;
-            }
-
-            .detail-label {
-                color: #888;
-            }
-
-            .detail-value {
-                color: #e0e0e0;
-            }
-
-            .detail-photo {
-                background: #333;
-                border-color: #444;
-            }
-
-            .photo-preview {
-                background: #2a2a2a;
-                border-color: #555;
-            }
-
-            .toast {
-                background: #fff;
-                color: #000;
-            }
-
-            .login-link {
-                color: #aaa;
-            }
+        .modal-overlay {
+            position:fixed; inset:0; background:rgba(0,0,0,0.6);
+            z-index:300; display:flex; align-items:flex-end; justify-content:center;
+        }
+        .modal-sheet {
+            background:var(--card); width:100%; max-width:500px;
+            max-height:92vh; border-radius:16px 16px 0 0;
+            overflow-y:auto; padding-bottom:24px;
+        }
+        .modal-handle { width:36px; height:4px; background:#ccc; border-radius:2px; margin:12px auto 8px; }
+        .modal-content { padding:0 20px 20px; }
+        .form-group { margin-bottom:14px; }
+        .form-label { display:block; font-size:0.75rem; font-weight:600; color:#888; margin-bottom:4px; text-transform:uppercase; }
+        .form-input, .form-textarea {
+            width:100%; padding:12px; border:2px solid var(--border);
+            border-radius:var(--radius); font-size:0.95rem; background:var(--input-bg);
+        }
+        .btn { padding:12px; border-radius:var(--radius); font-weight:600; cursor:pointer; border:none; width:100%; font-size:0.95rem; }
+        .btn-black { background:#000; color:#fff; }
+        .btn-outline { background:transparent; border:2px solid #000; }
+        .btn-danger { background:transparent; border:2px solid #c00; color:#c00; }
+        .toast {
+            position:fixed; bottom:90px; left:50%; transform:translateX(-50%);
+            background:#000; color:#fff; padding:10px 22px; border-radius:20px;
+            font-size:0.85rem; z-index:500;
         }
     </style>
 </head>
 <body>
-
-    <div class="app-container" id="appContainer">
-        <div class="header" id="header" style="display:none;">
-            <span class="header-title">👥 Cadastro Clientes</span>
-            <button class="header-btn" onclick="handleLogout()" title="Sair">⏻</button>
-        </div>
-
-        <div class="content" id="contentArea"></div>
-
-        <button class="fab" id="fabAdd" style="display:none;" onclick="openNewClientModal()" title="Novo cliente">+</button>
+<div class="app-container" id="appContainer">
+    <div class="header" id="header" style="display:none;">
+        <span class="header-title">🥗 Insalata Saladas</span>
+        <button class="header-btn" onclick="handleLogout()" title="Sair">⏻</button>
     </div>
+    <div class="tabs" id="tabs" style="display:none;">
+        <div class="tab active" onclick="switchTab('clientes')">👥 Clientes</div>
+        <div class="tab" onclick="switchTab('entregas')">📦 Entregas</div>
+    </div>
+    <div class="content" id="contentArea"></div>
+    <button class="fab" id="fabMain" style="display:none;" onclick="handleFab()">+</button>
+</div>
 
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyAH_F87WPWdg-kYLbcpgsxhVmi8Oq9ga3I",
-            authDomain: "lista-cliente-cacau.firebaseapp.com",
-            projectId: "lista-cliente-cacau",
-            storageBucket: "lista-cliente-cacau.firebasestorage.app",
-            messagingSenderId: "626280914294",
-            appId: "1:626280914294:web:2277e036c0bcce3dcd2e57"
-        };
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyAH_F87WPWdg-kYLbcpgsxhVmi8Oq9ga3I",
+        authDomain: "lista-cliente-cacau.firebaseapp.com",
+        projectId: "lista-cliente-cacau",
+        storageBucket: "lista-cliente-cacau.firebasestorage.app",
+        messagingSenderId: "626280914294",
+        appId: "1:626280914294:web:2277e036c0bcce3dcd2e57"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
 
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
+    let currentUser = null;
+    let currentTab = 'clientes';
+    let allClients = [];
+    let allEntregas = [];
+    let unsubscribeClients = null;
+    let unsubscribeEntregas = null;
+    let selectedClientIds = new Set();
+    let selectedEntregaIds = new Set();
 
-        let allClients = [];
-        let currentUser = null;
-        let editingClientId = null;
-        let selectedPhotoBase64 = null;
-        let unsubscribe = null;
-        let modalOpen = false;
-        let photoInputFile = null;
+    auth.onAuthStateChanged(user => {
+        currentUser = user;
+        if (user) {
+            document.getElementById('header').style.display = 'flex';
+            document.getElementById('tabs').style.display = 'flex';
+            document.getElementById('fabMain').style.display = 'flex';
+            loadData();
+        } else {
+            document.getElementById('header').style.display = 'none';
+            document.getElementById('tabs').style.display = 'none';
+            document.getElementById('fabMain').style.display = 'none';
+            if (unsubscribeClients) unsubscribeClients();
+            if (unsubscribeEntregas) unsubscribeEntregas();
+            renderLogin();
+        }
+    });
 
-        auth.onAuthStateChanged(user => {
-            currentUser = user;
-            if (user) {
-                document.getElementById('header').style.display = 'flex';
-                document.getElementById('fabAdd').style.display = 'flex';
-                loadClients();
-                renderClientList();
-            } else {
-                document.getElementById('header').style.display = 'none';
-                document.getElementById('fabAdd').style.display = 'none';
-                if (unsubscribe) unsubscribe();
-                allClients = [];
-                renderLoginScreen();
-            }
+    function loadData() {
+        if (unsubscribeClients) unsubscribeClients();
+        if (unsubscribeEntregas) unsubscribeEntregas();
+        const uid = currentUser.uid;
+        unsubscribeClients = db.collection('users').doc(uid).collection('clients')
+            .orderBy('nome').onSnapshot(snap => {
+                allClients = snap.docs.map(d => ({id: d.id, ...d.data()}));
+                if (currentTab === 'clientes') renderClientes();
+            });
+        const hoje = new Date().toISOString().slice(0,10);
+        unsubscribeEntregas = db.collection('users').doc(uid).collection('entregas')
+            .where('data', '==', hoje).orderBy('createdAt')
+            .onSnapshot(snap => {
+                allEntregas = snap.docs.map(d => ({id: d.id, ...d.data()}));
+                if (currentTab === 'entregas') renderEntregas();
+            });
+    }
+
+    function renderLogin() {
+        document.getElementById('contentArea').innerHTML = `
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;gap:20px;">
+                <div style="font-size:4rem;">🥗</div>
+                <h2>Insalata Saladas</h2>
+                <div style="width:100%;max-width:300px;display:flex;flex-direction:column;gap:12px;">
+                    <input id="loginEmail" placeholder="Email" class="form-input">
+                    <input id="loginPassword" type="password" placeholder="Senha" class="form-input">
+                    <button class="btn btn-black" onclick="handleLogin()">Entrar</button>
+                    <span style="text-align:center;font-size:0.85rem;cursor:pointer;" onclick="handleRegister()">Criar conta</span>
+                </div>
+            </div>`;
+    }
+
+    async function handleLogin() {
+        const e = document.getElementById('loginEmail').value.trim();
+        const p = document.getElementById('loginPassword').value;
+        if (!e || !p) return showToast('Preencha email e senha.');
+        try { await auth.signInWithEmailAndPassword(e,p); } catch (err) { showToast('Erro: '+err.message); }
+    }
+
+    async function handleRegister() {
+        const e = document.getElementById('loginEmail').value.trim();
+        const p = document.getElementById('loginPassword').value;
+        if (!e || !p) return showToast('Preencha email e senha.');
+        if (p.length<6) return showToast('Senha mínima de 6 caracteres.');
+        try { await auth.createUserWithEmailAndPassword(e,p); showToast('Conta criada!'); } catch (err) { showToast('Erro: '+err.message); }
+    }
+
+    async function handleLogout() { await auth.signOut(); }
+
+    function switchTab(tab) {
+        currentTab = tab;
+        document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', (i===0 && tab==='clientes')||(i===1 && tab==='entregas')));
+        if (tab==='clientes') renderClientes();
+        else renderEntregas();
+    }
+
+    function handleFab() {
+        if (currentTab==='clientes') openNewClientModal();
+        else openNewEntregaModal();
+    }
+
+    // ======== RENDER CLIENTES ========
+    function renderClientes(search='') {
+        selectedClientIds.clear();
+        let html = `<input class="search-box" placeholder="Buscar clientes..." value="${search}" oninput="renderClientes(this.value)">
+                    <div class="stats">${allClients.length} clientes</div><div class="client-list">`;
+        let filtered = allClients;
+        if (search.trim()) {
+            const s = search.trim().toLowerCase();
+            filtered = allClients.filter(c => c.nome.toLowerCase().includes(s) || (c.telefone||'').includes(s));
+        }
+        if (filtered.length===0) html += `<div style="text-align:center;color:#999;">Nenhum cliente encontrado.</div>`;
+        filtered.forEach(c => {
+            html += `
+                <div class="client-row">
+                    <input type="checkbox" class="checkbox" data-id="${c.id}">
+                    <div class="info" onclick="openEditClientModal('${c.id}')">
+                        <div class="name">${c.nome||'Sem nome'}</div>
+                        <div class="detail">${c.telefone||''} ${c.endereco||''}</div>
+                    </div>
+                </div>`;
         });
+        html += `</div><button class="btn btn-black" style="margin-top:12px;" onclick="criarEntregas()">➕ Criar Entregas (${document.querySelectorAll('.checkbox:checked').length})</button>`;
+        document.getElementById('contentArea').innerHTML = html;
+    }
 
-        function renderLoginScreen() {
-            document.getElementById('contentArea').innerHTML = `
-                <div class="login-container">
-                    <div class="login-icon">👥</div>
-                    <div class="login-title">Cadastro de Clientes</div>
-                    <div class="login-form" id="loginForm">
-                        <input type="email" id="loginEmail" placeholder="Email" autocomplete="email">
-                        <input type="password" id="loginPassword" placeholder="Senha" autocomplete="current-password">
-                        <button class="btn-login" onclick="handleLogin()">Entrar</button>
-                        <span class="login-link" onclick="handleRegister()">Criar conta</span>
-                    </div>
-                </div>
-            `;
-        }
-
-        async function handleLogin() {
-            const email = document.getElementById('loginEmail').value.trim();
-            const password = document.getElementById('loginPassword').value;
-            if (!email || !password) {
-                showToast('Preencha email e senha.');
-                return;
-            }
-            const btn = document.querySelector('.btn-login');
-            btn.innerHTML = '<span class="loading-spinner"></span> Entrando...';
-            btn.disabled = true;
-            try {
-                await auth.signInWithEmailAndPassword(email, password);
-            } catch (e) {
-                showToast('Erro: ' + getErrorMessage(e.code));
-                btn.textContent = 'Entrar';
-                btn.disabled = false;
-            }
-        }
-
-        async function handleRegister() {
-            const email = document.getElementById('loginEmail').value.trim();
-            const password = document.getElementById('loginPassword').value;
-            if (!email || !password) {
-                showToast('Preencha email e senha para criar conta.');
-                return;
-            }
-            if (password.length < 6) {
-                showToast('Senha deve ter no mínimo 6 caracteres.');
-                return;
-            }
-            const btn = document.querySelector('.btn-login');
-            btn.innerHTML = '<span class="loading-spinner"></span> Criando...';
-            btn.disabled = true;
-            try {
-                await auth.createUserWithEmailAndPassword(email, password);
-                showToast('Conta criada com sucesso!');
-            } catch (e) {
-                showToast('Erro: ' + getErrorMessage(e.code));
-                btn.textContent = 'Entrar';
-                btn.disabled = false;
-            }
-        }
-
-        async function handleLogout() {
-            if (modalOpen) {
-                closeModal();
-                setTimeout(() => auth.signOut(), 200);
-            } else {
-                await auth.signOut();
-            }
-        }
-
-        function getErrorMessage(code) {
-            const map = {
-                'auth/user-not-found': 'Usuário não encontrado.',
-                'auth/wrong-password': 'Senha incorreta.',
-                'auth/email-already-in-use': 'Email já cadastrado.',
-                'auth/invalid-email': 'Email inválido.',
-                'auth/weak-password': 'Senha muito fraca.',
-                'auth/invalid-credential': 'Email ou senha incorretos.',
-                'auth/too-many-requests': 'Muitas tentativas. Aguarde um momento.'
-            };
-            return map[code] || 'Algo deu errado. Tente novamente.';
-        }
-
-        function loadClients() {
-            if (unsubscribe) unsubscribe();
-            if (!currentUser) return;
-            unsubscribe = db.collection('users').doc(currentUser.uid).collection('clients')
-                .orderBy('nome', 'asc')
-                .onSnapshot(snapshot => {
-                    allClients = [];
-                    snapshot.forEach(doc => {
-                        allClients.push({ id: doc.id, ...doc.data() });
-                    });
-                    if (!modalOpen) renderClientList();
-                }, error => {
-                    console.error('Erro ao carregar:', error);
-                    showToast('Erro ao carregar clientes.');
-                });
-        }
-
-        function renderClientList(searchTerm = '') {
-            const area = document.getElementById('contentArea');
-            let filtered = allClients;
-            if (searchTerm.trim()) {
-                const term = searchTerm.trim().toLowerCase();
-                filtered = allClients.filter(c =>
-                    (c.nome && c.nome.toLowerCase().includes(term)) ||
-                    (c.telefone && c.telefone.includes(term)) ||
-                    (c.codigo && c.codigo.toString().includes(term)) ||
-                    (c.ficha && c.ficha.toLowerCase().includes(term))
-                );
-            }
-
-            let html = `
-                <div class="search-container">
-                    <input class="search-input" type="text" id="searchInput" placeholder="Buscar por nome, telefone, código..." value="${escapeHtml(searchTerm)}" oninput="onSearch(this.value)">
-                </div>
-                <div class="stats">${allClients.length} cliente(s) cadastrado(s)${searchTerm ? ' · ' + filtered.length + ' encontrado(s)' : ''}</div>
-                <div class="client-list">
-            `;
-
-            if (filtered.length === 0) {
-                html += `
-                    <div class="empty-state">
-                        <span>📋</span>
-                        <p>${searchTerm ? 'Nenhum cliente encontrado.' : 'Nenhum cliente cadastrado ainda.'}</p>
-                    </div>
-                `;
-            } else {
-                filtered.forEach(client => {
-                    const initials = client.nome ? client.nome.substring(0, 2).toUpperCase() : '?';
-                    const hasPhoto = client.foto && client.foto.startsWith('data:image');
-                    html += `
-                        <div class="client-card" onclick="openViewClientModal('${client.id}')">
-                            <div class="client-thumb">
-                                ${hasPhoto ? `<img src="${client.foto}" alt="">` : initials}
-                            </div>
-                            <div class="client-info">
-                                <div class="client-name">${escapeHtml(client.nome || 'Sem nome')}</div>
-                                <div class="client-extra">${escapeHtml(client.telefone || '')} ${client.codigo ? '· Cód: ' + escapeHtml(String(client.codigo)) : ''}</div>
-                            </div>
-                            <div class="client-ficha">${escapeHtml(client.ficha || '')}</div>
-                        </div>
-                    `;
-                });
-            }
-
-            html += '</div>';
-            area.innerHTML = html;
-
-            const si = document.getElementById('searchInput');
-            if (si && searchTerm) {
-                si.focus();
-                si.setSelectionRange(si.value.length, si.value.length);
-            }
-        }
-
-        function onSearch(value) {
-            renderClientList(value);
-        }
-
-        function escapeHtml(str) {
-            if (!str) return '';
-            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-        }
-
-        async function getNextFicha() {
-            if (!currentUser) return 'F001';
-            const counterRef = db.collection('users').doc(currentUser.uid);
-            try {
-                const doc = await counterRef.get();
-                let next = 1;
-                if (doc.exists && doc.data().fichaCounter) {
-                    next = doc.data().fichaCounter + 1;
-                }
-                await counterRef.set({ fichaCounter: next }, { merge: true });
-                return 'F' + String(next).padStart(3, '0');
-            } catch (e) {
-                console.error('Erro ao gerar ficha:', e);
-                return 'F' + Date.now().toString().slice(-6);
-            }
-        }
-
-        async function openNewClientModal() {
-            editingClientId = null;
-            selectedPhotoBase64 = null;
-            photoInputFile = null;
-            const ficha = await getNextFicha();
-            modalOpen = true;
-            showModal(`
-                <div class="modal-handle"></div>
-                <div class="modal-content">
-                    <div class="modal-title">Novo Cliente</div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">Ficha</label>
-                            <input class="form-input" value="${ficha}" readonly style="background:#f9f9f9;color:#888;">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Código</label>
-                            <input class="form-input" type="number" id="clienteCodigo" placeholder="Ex: 123">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Nome *</label>
-                        <input class="form-input" id="clienteNome" placeholder="Nome completo">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Telefone</label>
-                        <input class="form-input" id="clienteTelefone" placeholder="(00) 00000-0000" type="tel">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Endereço</label>
-                        <input class="form-input" id="clienteEndereco" placeholder="Rua, número">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Complemento</label>
-                        <input class="form-input" id="clienteComplemento" placeholder="Apto, bloco, etc.">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Observações</label>
-                        <textarea class="form-textarea" id="clienteObs" placeholder="Anotações..."></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Foto</label>
-                        <div class="photo-area">
-                            <div class="photo-preview" id="photoPreview" onclick="document.getElementById('photoInput').click()">📷</div>
-                            <div class="photo-actions">
-                                <button class="btn-photo" onclick="document.getElementById('photoInput').click()">📁 Galeria</button>
-                                <button class="btn-photo" onclick="capturePhoto()">📸 Câmera</button>
-                                <button class="btn-photo btn-photo-danger" id="btnRemovePhoto" style="display:none;" onclick="removePhoto()">✕ Remover</button>
-                            </div>
-                            <input type="file" id="photoInput" accept="image/*" style="display:none;" onchange="handlePhotoSelect(event)">
-                        </div>
-                    </div>
-                    <button class="btn-save" onclick="saveClient('${ficha}')">💾 Salvar Cliente</button>
-                    <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
-                </div>
-            `);
-        }
-
-        function openViewClientModal(clientId) {
-            const client = allClients.find(c => c.id === clientId);
-            if (!client) return;
-            editingClientId = clientId;
-            selectedPhotoBase64 = client.foto || null;
-            photoInputFile = null;
-            modalOpen = true;
-            showModal(`
-                <div class="modal-handle"></div>
-                <div class="modal-content">
-                    <div class="modal-title">${escapeHtml(client.nome || 'Cliente')}</div>
-                    <div class="detail-photo">
-                        ${client.foto && client.foto.startsWith('data:image') ? `<img src="${client.foto}" alt="">` : '👤'}
-                    </div>
-                    <div class="detail-field"><div class="detail-label">Ficha</div><div class="detail-value">${escapeHtml(client.ficha || '-')}</div></div>
-                    <div class="detail-field"><div class="detail-label">Código</div><div class="detail-value">${client.codigo ? escapeHtml(String(client.codigo)) : '-'}</div></div>
-                    <div class="detail-field"><div class="detail-label">Nome</div><div class="detail-value">${escapeHtml(client.nome || '-')}</div></div>
-                    <div class="detail-field"><div class="detail-label">Telefone</div><div class="detail-value">${escapeHtml(client.telefone || '-')}</div></div>
-                    <div class="detail-field"><div class="detail-label">Endereço</div><div class="detail-value">${escapeHtml(client.endereco || '-')}</div></div>
-                    <div class="detail-field"><div class="detail-label">Complemento</div><div class="detail-value">${escapeHtml(client.complemento || '-')}</div></div>
-                    <div class="detail-field"><div class="detail-label">Observações</div><div class="detail-value">${escapeHtml(client.observacoes || '-')}</div></div>
-                    <button class="btn-save" onclick="openEditClientModal('${clientId}')">✏️ Editar</button>
-                    <button class="btn-delete" onclick="deleteClient('${clientId}')">🗑️ Excluir Cliente</button>
-                    <button class="btn-cancel" onclick="closeModal()">Fechar</button>
-                </div>
-            `);
-        }
-
-        function openEditClientModal(clientId) {
-            const client = allClients.find(c => c.id === clientId);
-            if (!client) return;
-            editingClientId = clientId;
-            selectedPhotoBase64 = client.foto || null;
-            photoInputFile = null;
-            modalOpen = true;
-            showModal(`
-                <div class="modal-handle"></div>
-                <div class="modal-content">
-                    <div class="modal-title">Editar Cliente</div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">Ficha</label>
-                            <input class="form-input" value="${escapeHtml(client.ficha || '')}" readonly style="background:#f9f9f9;color:#888;">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Código</label>
-                            <input class="form-input" type="number" id="clienteCodigo" value="${client.codigo || ''}">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Nome *</label>
-                        <input class="form-input" id="clienteNome" value="${escapeHtml(client.nome || '')}">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Telefone</label>
-                        <input class="form-input" id="clienteTelefone" value="${escapeHtml(client.telefone || '')}" type="tel">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Endereço</label>
-                        <input class="form-input" id="clienteEndereco" value="${escapeHtml(client.endereco || '')}">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Complemento</label>
-                        <input class="form-input" id="clienteComplemento" value="${escapeHtml(client.complemento || '')}">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Observações</label>
-                        <textarea class="form-textarea" id="clienteObs">${escapeHtml(client.observacoes || '')}</textarea>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Foto</label>
-                        <div class="photo-area">
-                            <div class="photo-preview" id="photoPreview" onclick="document.getElementById('photoInput').click()">
-                                ${client.foto && client.foto.startsWith('data:image') ? `<img src="${client.foto}" alt="">` : '📷'}
-                            </div>
-                            <div class="photo-actions">
-                                <button class="btn-photo" onclick="document.getElementById('photoInput').click()">📁 Galeria</button>
-                                <button class="btn-photo" onclick="capturePhoto()">📸 Câmera</button>
-                                <button class="btn-photo btn-photo-danger" id="btnRemovePhoto" style="${client.foto ? '' : 'display:none;'}" onclick="removePhoto()">✕ Remover</button>
-                            </div>
-                            <input type="file" id="photoInput" accept="image/*" style="display:none;" onchange="handlePhotoSelect(event)">
-                        </div>
-                    </div>
-                    <button class="btn-save" onclick="saveClient('${client.ficha || ''}')">💾 Salvar Alterações</button>
-                    <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
-                </div>
-            `);
-        }
-
-        function showModal(innerHTML) {
-            const overlay = document.createElement('div');
-            overlay.className = 'modal-overlay';
-            overlay.id = 'modalOverlay';
-            overlay.innerHTML = `<div class="modal-sheet" id="modalSheet">${innerHTML}</div>`;
-            document.body.appendChild(overlay);
-            overlay.addEventListener('click', function(e) {
-                if (e.target === overlay) closeModal();
+    function criarEntregas() {
+        const checks = document.querySelectorAll('.checkbox:checked');
+        if (checks.length===0) return showToast('Selecione ao menos um cliente.');
+        const hoje = new Date().toISOString().slice(0,10);
+        const uid = currentUser.uid;
+        const batch = db.batch();
+        let count = 0;
+        checks.forEach(cb => {
+            const cid = cb.getAttribute('data-id');
+            const cliente = allClients.find(c => c.id===cid);
+            if (!cliente) return;
+            const ref = db.collection('users').doc(uid).collection('entregas').doc();
+            batch.set(ref, {
+                clienteId: cid,
+                nome: cliente.nome||'',
+                endereco: cliente.endereco||'',
+                complemento: cliente.complemento||'',
+                enderecoTrabalho: cliente.enderecoTrabalho||'',
+                complementoTrabalho: cliente.complementoTrabalho||'',
+                enderecoSelecionado: 'residencial',
+                valor: 0,
+                pagamento: 'dinheiro',
+                troco: '',
+                status: 'pendente',
+                data: hoje,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
-            document.body.style.overflow = 'hidden';
-            setTimeout(() => {
-                updatePhotoPreview();
-            }, 100);
-        }
+            count++;
+        });
+        batch.commit().then(() => { showToast(`${count} entregas criadas!`); switchTab('entregas'); });
+    }
 
-        function closeModal() {
-            const overlay = document.getElementById('modalOverlay');
-            if (overlay) overlay.remove();
-            document.body.style.overflow = '';
-            modalOpen = false;
-            editingClientId = null;
-            selectedPhotoBase64 = null;
-            photoInputFile = null;
-            renderClientList();
-        }
+    // ======== RENDER ENTREGAS ========
+    function renderEntregas() {
+        selectedEntregaIds.clear();
+        let pendentes = allEntregas.filter(e => e.status==='pendente');
+        let entregues = allEntregas.filter(e => e.status==='entregue');
+        let html = `<div class="stats">📦 ${pendentes.length} pendentes · ✅ ${entregues.length} entregues</div><div class="entrega-list">`;
+        [...pendentes, ...entregues].forEach(e => {
+            const addr = e.enderecoSelecionado==='trabalho' ? (e.enderecoTrabalho||e.endereco) : e.endereco;
+            const pag = e.pagamento==='dinheiro'?`Dinheiro${e.troco?' (Troco: R$'+e.troco+')':''}`:e.pagamento;
+            html += `
+                <div class="entrega-row">
+                    <input type="checkbox" class="checkbox-entrega" data-id="${e.id}" ${e.status==='entregue'?'disabled':''}>
+                    <div class="info" onclick="openEditEntregaModal('${e.id}')">
+                        <div class="name">${e.nome} <span class="badge badge-${e.status}">${e.status}</span></div>
+                        <div class="detail">${addr} · R$ ${parseFloat(e.valor||0).toFixed(2)} · ${pag}</div>
+                    </div>
+                </div>`;
+        });
+        html += `</div>
+            <button class="btn btn-black" style="margin-top:12px;" onclick="gerarRota()">🗺️ Rota (${document.querySelectorAll('.checkbox-entrega:checked').length})</button>
+            <button class="btn btn-outline" style="margin-top:8px;" onclick="marcarEntregues()">✅ Marcar como Entregues</button>`;
+        document.getElementById('contentArea').innerHTML = html;
+    }
 
-        function handlePhotoSelect(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            photoInputFile = file;
-            compressAndPreview(file);
-        }
+    function gerarRota() {
+        const checks = document.querySelectorAll('.checkbox-entrega:checked');
+        if (checks.length===0) return showToast('Selecione ao menos uma entrega.');
+        const selecionadas = Array.from(checks).map(cb => allEntregas.find(e=>e.id===cb.getAttribute('data-id')));
+        if (selecionadas.length>10) return showToast('Máximo 10 endereços por rota.');
+        const waypoints = selecionadas.map(e => {
+            const addr = e.enderecoSelecionado==='trabalho' ? (e.enderecoTrabalho||e.endereco) : e.endereco;
+            return encodeURIComponent(addr + (e.complemento?' '+e.complemento:''));
+        });
+        const destination = waypoints.pop();
+        const url = `https://www.google.com/maps/dir/?api=1&destination=${destination}&waypoints=${waypoints.join('|')}&travelmode=driving`;
+        window.open(url, '_blank');
+    }
 
-        function capturePhoto() {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = 'image/*';
-            input.capture = 'environment';
-            input.onchange = function(e) {
-                const file = e.target.files[0];
-                if (!file) return;
-                photoInputFile = file;
-                compressAndPreview(file);
-            };
-            input.click();
-        }
+    async function marcarEntregues() {
+        const checks = document.querySelectorAll('.checkbox-entrega:checked');
+        if (checks.length===0) return showToast('Selecione as entregas.');
+        const batch = db.batch();
+        checks.forEach(cb => {
+            const eid = cb.getAttribute('data-id');
+            batch.update(db.collection('users').doc(currentUser.uid).collection('entregas').doc(eid), {status:'entregue'});
+        });
+        await batch.commit();
+        showToast('Entregas atualizadas!');
+    }
 
-        function compressAndPreview(file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = new Image();
-                img.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    let width = img.width;
-                    let height = img.height;
-                    const maxDim = 600;
-                    if (width > maxDim || height > maxDim) {
-                        if (width > height) {
-                            height = Math.round((height / width) * maxDim);
-                            width = maxDim;
-                        } else {
-                            width = Math.round((width / height) * maxDim);
-                            height = maxDim;
-                        }
-                    }
-                    canvas.width = width;
-                    canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-                    selectedPhotoBase64 = canvas.toDataURL('image/jpeg', 0.5);
-                    updatePhotoPreview();
-                };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        }
+    // ======== MODAIS ========
+    function openNewClientModal() {
+        showModal(`
+            <div class="modal-handle"></div><div class="modal-content">
+                <h3>Novo Cliente</h3>
+                <div class="form-group"><label class="form-label">Nome *</label><input class="form-input" id="cNome"></div>
+                <div class="form-group"><label class="form-label">Telefone</label><input class="form-input" id="cTel"></div>
+                <div class="form-group"><label class="form-label">Endereço Residencial</label><input class="form-input" id="cEnd"></div>
+                <div class="form-group"><label class="form-label">Complemento</label><input class="form-input" id="cComp"></div>
+                <div class="form-group"><label class="form-label">Endereço Trabalho</label><input class="form-input" id="cEndTrab"></div>
+                <div class="form-group"><label class="form-label">Complemento Trab.</label><input class="form-input" id="cCompTrab"></div>
+                <button class="btn btn-black" onclick="saveNewClient()">Salvar</button>
+                <button class="btn btn-outline" style="margin-top:6px;" onclick="closeModal()">Cancelar</button>
+            </div>`);
+    }
 
-        function removePhoto() {
-            selectedPhotoBase64 = null;
-            photoInputFile = null;
-            const input = document.getElementById('photoInput');
-            if (input) input.value = '';
-            updatePhotoPreview();
-        }
+    async function saveNewClient() {
+        const nome = document.getElementById('cNome').value.trim();
+        if (!nome) return showToast('Nome obrigatório.');
+        await db.collection('users').doc(currentUser.uid).collection('clients').add({
+            nome, telefone: document.getElementById('cTel').value.trim(),
+            endereco: document.getElementById('cEnd').value.trim(),
+            complemento: document.getElementById('cComp').value.trim(),
+            enderecoTrabalho: document.getElementById('cEndTrab').value.trim(),
+            complementoTrabalho: document.getElementById('cCompTrab').value.trim()
+        });
+        closeModal(); showToast('Cliente adicionado!');
+    }
 
-        function updatePhotoPreview() {
-            const preview = document.getElementById('photoPreview');
-            const btnRemove = document.getElementById('btnRemovePhoto');
-            if (!preview) return;
-            if (selectedPhotoBase64 && selectedPhotoBase64.startsWith('data:image')) {
-                preview.innerHTML = `<img src="${selectedPhotoBase64}" alt="">`;
-                if (btnRemove) btnRemove.style.display = '';
-            } else {
-                preview.innerHTML = '📷';
-                if (btnRemove) btnRemove.style.display = 'none';
-            }
-        }
+    function openEditClientModal(id) {
+        const c = allClients.find(c=>c.id===id); if(!c) return;
+        showModal(`
+            <div class="modal-handle"></div><div class="modal-content">
+                <h3>Editar Cliente</h3>
+                <div class="form-group"><label class="form-label">Nome</label><input class="form-input" id="eNome" value="${c.nome||''}"></div>
+                <div class="form-group"><label class="form-label">Telefone</label><input class="form-input" id="eTel" value="${c.telefone||''}"></div>
+                <div class="form-group"><label class="form-label">Endereço</label><input class="form-input" id="eEnd" value="${c.endereco||''}"></div>
+                <div class="form-group"><label class="form-label">Complemento</label><input class="form-input" id="eComp" value="${c.complemento||''}"></div>
+                <div class="form-group"><label class="form-label">End. Trabalho</label><input class="form-input" id="eEndTrab" value="${c.enderecoTrabalho||''}"></div>
+                <div class="form-group"><label class="form-label">Comp. Trab.</label><input class="form-input" id="eCompTrab" value="${c.complementoTrabalho||''}"></div>
+                <button class="btn btn-black" onclick="updateClient('${id}')">Salvar</button>
+                <button class="btn btn-danger" style="margin-top:6px;" onclick="deleteClient('${id}')">Excluir</button>
+                <button class="btn btn-outline" style="margin-top:6px;" onclick="closeModal()">Cancelar</button>
+            </div>`);
+    }
 
-        async function saveClient(ficha) {
-            const nome = document.getElementById('clienteNome')?.value.trim();
-            if (!nome) {
-                showToast('O campo Nome é obrigatório.');
-                return;
-            }
-            const codigoRaw = document.getElementById('clienteCodigo')?.value.trim();
-            const codigo = codigoRaw ? Number(codigoRaw) : null;
-            const data = {
-                ficha: ficha,
-                codigo: codigo,
-                nome: nome,
-                telefone: document.getElementById('clienteTelefone')?.value.trim() || '',
-                endereco: document.getElementById('clienteEndereco')?.value.trim() || '',
-                complemento: document.getElementById('clienteComplemento')?.value.trim() || '',
-                observacoes: document.getElementById('clienteObs')?.value.trim() || '',
-                foto: selectedPhotoBase64 || '',
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            };
-            const btn = document.querySelector('.btn-save');
-            const originalText = btn.textContent;
-            btn.innerHTML = '<span class="loading-spinner"></span> Salvando...';
-            btn.disabled = true;
-            try {
-                const clientsRef = db.collection('users').doc(currentUser.uid).collection('clients');
-                if (editingClientId) {
-                    await clientsRef.doc(editingClientId).update(data);
-                    showToast('Cliente atualizado! ✓');
-                } else {
-                    data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-                    await clientsRef.add(data);
-                    showToast('Cliente cadastrado! ✓');
-                }
-                closeModal();
-            } catch (e) {
-                console.error('Erro ao salvar:', e);
-                showToast('Erro ao salvar. Tente novamente.');
-                btn.textContent = originalText;
-                btn.disabled = false;
-            }
-        }
+    async function updateClient(id) {
+        await db.collection('users').doc(currentUser.uid).collection('clients').doc(id).update({
+            nome: document.getElementById('eNome').value.trim(),
+            telefone: document.getElementById('eTel').value.trim(),
+            endereco: document.getElementById('eEnd').value.trim(),
+            complemento: document.getElementById('eComp').value.trim(),
+            enderecoTrabalho: document.getElementById('eEndTrab').value.trim(),
+            complementoTrabalho: document.getElementById('eCompTrab').value.trim()
+        });
+        closeModal(); showToast('Cliente atualizado!');
+    }
 
-        async function deleteClient(clientId) {
-            if (!confirm('Tem certeza que deseja excluir este cliente? Esta ação não pode ser desfeita.')) return;
-            try {
-                await db.collection('users').doc(currentUser.uid).collection('clients').doc(clientId).delete();
-                showToast('Cliente excluído.');
-                closeModal();
-            } catch (e) {
-                console.error('Erro ao excluir:', e);
-                showToast('Erro ao excluir.');
-            }
-        }
+    async function deleteClient(id) {
+        if (!confirm('Excluir cliente?')) return;
+        await db.collection('users').doc(currentUser.uid).collection('clients').doc(id).delete();
+        closeModal(); showToast('Cliente removido.');
+    }
 
-        let toastTimeout;
-        function showToast(msg) {
-            const existing = document.getElementById('toastMsg');
-            if (existing) existing.remove();
-            clearTimeout(toastTimeout);
-            const toast = document.createElement('div');
-            toast.className = 'toast';
-            toast.id = 'toastMsg';
-            toast.textContent = msg;
-            document.body.appendChild(toast);
-            toastTimeout = setTimeout(() => toast.remove(), 2500);
-        }
+    function openNewEntregaModal() {
+        let opts = allClients.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
+        showModal(`
+            <div class="modal-handle"></div><div class="modal-content">
+                <h3>Nova Entrega</h3>
+                <div class="form-group"><label class="form-label">Cliente</label>
+                    <select class="form-input" id="selCliente">${opts}</select>
+                </div>
+                <div class="form-group"><label class="form-label">Endereço</label>
+                    <select class="form-input" id="selEndereco"><option value="residencial">Residencial</option><option value="trabalho">Trabalho</option></select>
+                </div>
+                <div class="form-group"><label class="form-label">Valor (R$)</label><input class="form-input" type="number" step="0.01" id="entregaValor"></div>
+                <div class="form-group"><label class="form-label">Pagamento</label>
+                    <select class="form-input" id="entregaPgto" onchange="toggleTroco()">
+                        <option value="dinheiro">Dinheiro</option><option value="cartao">Cartão</option><option value="pix">Pix</option>
+                    </select>
+                </div>
+                <div class="form-group" id="grupoTroco"><label class="form-label">Troco (R$)</label><input class="form-input" type="number" step="0.01" id="entregaTroco"></div>
+                <button class="btn btn-black" onclick="saveNovaEntrega()">Salvar Entrega</button>
+                <button class="btn btn-outline" style="margin-top:6px;" onclick="closeModal()">Cancelar</button>
+            </div>`);
+    }
 
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                const swCode = `
-                    self.addEventListener('install', e => self.skipWaiting());
-                    self.addEventListener('activate', e => self.clients.claim());
-                    self.addEventListener('fetch', e => e.respondWith(fetch(e.request)));
-                `;
-                const blob = new Blob([swCode], { type: 'application/javascript' });
-                const swUrl = URL.createObjectURL(blob);
-                navigator.serviceWorker.register(swUrl).catch(() => {});
-            });
-        }
-    </script>
+    function toggleTroco() {
+        const pgto = document.getElementById('entregaPgto')?.value;
+        document.getElementById('grupoTroco').style.display = pgto==='dinheiro'?'block':'none';
+    }
+
+    async function saveNovaEntrega() {
+        const cid = document.getElementById('selCliente').value;
+        const cliente = allClients.find(c=>c.id===cid);
+        if (!cliente) return;
+        const hoje = new Date().toISOString().slice(0,10);
+        await db.collection('users').doc(currentUser.uid).collection('entregas').add({
+            clienteId: cid,
+            nome: cliente.nome,
+            endereco: cliente.endereco||'',
+            complemento: cliente.complemento||'',
+            enderecoTrabalho: cliente.enderecoTrabalho||'',
+            complementoTrabalho: cliente.complementoTrabalho||'',
+            enderecoSelecionado: document.getElementById('selEndereco').value,
+            valor: parseFloat(document.getElementById('entregaValor').value)||0,
+            pagamento: document.getElementById('entregaPgto').value,
+            troco: document.getElementById('entregaTroco')?.value||'',
+            status: 'pendente',
+            data: hoje,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        closeModal(); showToast('Entrega adicionada!');
+    }
+
+    function openEditEntregaModal(id) {
+        const e = allEntregas.find(e=>e.id===id); if (!e) return;
+        showModal(`
+            <div class="modal-handle"></div><div class="modal-content">
+                <h3>Editar Entrega</h3>
+                <div class="form-group"><label class="form-label">Endereço</label>
+                    <select class="form-input" id="editEndereco">
+                        <option value="residencial" ${e.enderecoSelecionado==='residencial'?'selected':''}>Residencial</option>
+                        <option value="trabalho" ${e.enderecoSelecionado==='trabalho'?'selected':''}>Trabalho</option>
+                    </select>
+                </div>
+                <div class="form-group"><label class="form-label">Valor</label><input class="form-input" type="number" step="0.01" id="editValor" value="${e.valor||0}"></div>
+                <div class="form-group"><label class="form-label">Pagamento</label>
+                    <select class="form-input" id="editPgto">
+                        <option value="dinheiro" ${e.pagamento==='dinheiro'?'selected':''}>Dinheiro</option>
+                        <option value="cartao" ${e.pagamento==='cartao'?'selected':''}>Cartão</option>
+                        <option value="pix" ${e.pagamento==='pix'?'selected':''}>Pix</option>
+                    </select>
+                </div>
+                <div class="form-group"><label class="form-label">Troco</label><input class="form-input" type="number" step="0.01" id="editTroco" value="${e.troco||''}"></div>
+                <button class="btn btn-black" onclick="updateEntrega('${id}')">Salvar</button>
+                <button class="btn btn-danger" style="margin-top:6px;" onclick="deleteEntrega('${id}')">Excluir</button>
+                <button class="btn btn-outline" style="margin-top:6px;" onclick="closeModal()">Cancelar</button>
+            </div>`);
+    }
+
+    async function updateEntrega(id) {
+        await db.collection('users').doc(currentUser.uid).collection('entregas').doc(id).update({
+            enderecoSelecionado: document.getElementById('editEndereco').value,
+            valor: parseFloat(document.getElementById('editValor').value)||0,
+            pagamento: document.getElementById('editPgto').value,
+            troco: document.getElementById('editTroco').value
+        });
+        closeModal(); showToast('Entrega atualizada!');
+    }
+
+    async function deleteEntrega(id) {
+        if (!confirm('Excluir entrega?')) return;
+        await db.collection('users').doc(currentUser.uid).collection('entregas').doc(id).delete();
+        closeModal(); showToast('Entrega removida.');
+    }
+
+    // ======== UTILITÁRIOS ========
+    function showModal(html) {
+        const overlay = document.createElement('div'); overlay.className='modal-overlay'; overlay.id='modalOverlay';
+        overlay.innerHTML = `<div class="modal-sheet">${html}</div>`;
+        document.body.appendChild(overlay);
+        overlay.addEventListener('click', e => { if (e.target===overlay) closeModal(); });
+        document.body.style.overflow='hidden';
+    }
+
+    function closeModal() {
+        const ov = document.getElementById('modalOverlay'); if (ov) ov.remove();
+        document.body.style.overflow='';
+        if (currentTab==='clientes') renderClientes();
+        else renderEntregas();
+    }
+
+    function showToast(msg) {
+        const t = document.createElement('div'); t.className='toast'; t.textContent=msg;
+        document.body.appendChild(t); setTimeout(()=>t.remove(), 2500);
+    }
+</script>
 </body>
 </html>
