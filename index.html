@@ -198,13 +198,19 @@
                 allClients = snap.docs.map(d => ({id: d.id, ...d.data()}));
                 if (currentTab === 'clientes') renderClientes();
             });
+
         const hoje = new Date().toISOString().slice(0,10);
+        // Removemos o orderBy para não exigir índice composto; ordenaremos localmente
         unsubscribeEntregas = db.collection('users').doc(uid).collection('entregas')
             .where('data', '==', hoje)
-            .orderBy('criadoEm', 'asc')   // agora campo local preenchido
             .onSnapshot(snap => {
-                allEntregas = snap.docs.map(d => ({id: d.id, ...d.data()}));
+                allEntregas = snap.docs
+                    .map(d => ({id: d.id, ...d.data()}))
+                    .sort((a, b) => (a.criadoEm || '').localeCompare(b.criadoEm || ''));
                 if (currentTab === 'entregas') renderEntregas();
+            }, error => {
+                console.error('Erro ao carregar entregas:', error);
+                showToast('Erro ao carregar entregas. Tente recarregar.');
             });
     }
 
@@ -281,7 +287,7 @@
         const checks = document.querySelectorAll('.checkbox:checked');
         if (checks.length===0) return showToast('Selecione ao menos um cliente.');
         const hoje = new Date().toISOString().slice(0,10);
-        const criadoEm = new Date().toISOString(); // timestamp local imediato
+        const criadoEm = new Date().toISOString();
         const uid = currentUser.uid;
         const batch = db.batch();
         let count = 0;
