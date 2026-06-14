@@ -167,8 +167,6 @@
     let allEntregas = [];
     let unsubscribeClients = null;
     let unsubscribeEntregas = null;
-    let selectedClientIds = new Set();
-    let selectedEntregaIds = new Set();
 
     auth.onAuthStateChanged(user => {
         currentUser = user;
@@ -248,9 +246,8 @@
         else openNewEntregaModal();
     }
 
-    // ======== RENDER CLIENTES ========
+    // ======== CLIENTES ========
     function renderClientes(search='') {
-        selectedClientIds.clear();
         let html = `<input class="search-box" placeholder="Buscar clientes..." value="${search}" oninput="renderClientes(this.value)">
                     <div class="stats">${allClients.length} clientes</div><div class="client-list">`;
         let filtered = allClients;
@@ -258,22 +255,22 @@
             const s = search.trim().toLowerCase();
             filtered = allClients.filter(c => c.nome.toLowerCase().includes(s) || (c.telefone||'').includes(s));
         }
-        if (filtered.length===0) html += `<div style="text-align:center;color:#999;">Nenhum cliente encontrado.</div>`;
+        if (filtered.length===0) html += `<div style="text-align:center;color:#999;">Nenhum cliente.</div>`;
         filtered.forEach(c => {
             html += `
                 <div class="client-row">
                     <input type="checkbox" class="checkbox" data-id="${c.id}">
                     <div class="info" onclick="openEditClientModal('${c.id}')">
                         <div class="name">${c.nome||'Sem nome'}</div>
-                        <div class="detail">${c.telefone||''} ${c.endereco||''}</div>
+                        <div class="detail">${c.telefone||''} · Taxa: R$ ${(c.taxaEntrega||0).toFixed(2)}</div>
                     </div>
                 </div>`;
         });
-        html += `</div><button class="btn btn-black" style="margin-top:12px;" onclick="criarEntregas()">➕ Criar Entregas (${document.querySelectorAll('.checkbox:checked').length})</button>`;
+        html += `</div><button class="btn btn-black" style="margin-top:12px;" onclick="criarEntregas()">➕ Criar Entregas</button>`;
         document.getElementById('contentArea').innerHTML = html;
     }
 
-    function criarEntregas() {
+    async function criarEntregas() {
         const checks = document.querySelectorAll('.checkbox:checked');
         if (checks.length===0) return showToast('Selecione ao menos um cliente.');
         const hoje = new Date().toISOString().slice(0,10);
@@ -293,7 +290,7 @@
                 enderecoTrabalho: cliente.enderecoTrabalho||'',
                 complementoTrabalho: cliente.complementoTrabalho||'',
                 enderecoSelecionado: 'residencial',
-                valor: 0,
+                valor: cliente.taxaEntrega || 0,
                 pagamento: 'dinheiro',
                 troco: '',
                 status: 'pendente',
@@ -302,12 +299,13 @@
             });
             count++;
         });
-        batch.commit().then(() => { showToast(`${count} entregas criadas!`); switchTab('entregas'); });
+        await batch.commit();
+        showToast(`${count} entregas criadas!`);
+        switchTab('entregas');
     }
 
-    // ======== RENDER ENTREGAS ========
+    // ======== ENTREGAS ========
     function renderEntregas() {
-        selectedEntregaIds.clear();
         let pendentes = allEntregas.filter(e => e.status==='pendente');
         let entregues = allEntregas.filter(e => e.status==='entregue');
         let html = `<div class="stats">📦 ${pendentes.length} pendentes · ✅ ${entregues.length} entregues</div><div class="entrega-list">`;
@@ -324,16 +322,16 @@
                 </div>`;
         });
         html += `</div>
-            <button class="btn btn-black" style="margin-top:12px;" onclick="gerarRota()">🗺️ Rota (${document.querySelectorAll('.checkbox-entrega:checked').length})</button>
-            <button class="btn btn-outline" style="margin-top:8px;" onclick="marcarEntregues()">✅ Marcar como Entregues</button>`;
+            <button class="btn btn-black" style="margin-top:12px;" onclick="gerarRota()">🗺️ Rota</button>
+            <button class="btn btn-outline" style="margin-top:8px;" onclick="marcarEntregues()">✅ Marcar Entregues</button>`;
         document.getElementById('contentArea').innerHTML = html;
     }
 
     function gerarRota() {
         const checks = document.querySelectorAll('.checkbox-entrega:checked');
-        if (checks.length===0) return showToast('Selecione ao menos uma entrega.');
+        if (checks.length===0) return showToast('Selecione as entregas para a rota.');
         const selecionadas = Array.from(checks).map(cb => allEntregas.find(e=>e.id===cb.getAttribute('data-id')));
-        if (selecionadas.length>10) return showToast('Máximo 10 endereços por rota.');
+        if (selecionadas.length>10) return showToast('Máximo 10 endereços.');
         const waypoints = selecionadas.map(e => {
             const addr = e.enderecoSelecionado==='trabalho' ? (e.enderecoTrabalho||e.endereco) : e.endereco;
             return encodeURIComponent(addr + (e.complemento?' '+e.complemento:''));
@@ -347,9 +345,10 @@
         const checks = document.querySelectorAll('.checkbox-entrega:checked');
         if (checks.length===0) return showToast('Selecione as entregas.');
         const batch = db.batch();
+        const uid = currentUser.uid;
         checks.forEach(cb => {
             const eid = cb.getAttribute('data-id');
-            batch.update(db.collection('users').doc(currentUser.uid).collection('entregas').doc(eid), {status:'entregue'});
+            batch.update(db.collection('users').doc(uid).collection('entregas').doc(eid), {status:'entregue'});
         });
         await batch.commit();
         showToast('Entregas atualizadas!');
@@ -366,6 +365,7 @@
                 <div class="form-group"><label class="form-label">Complemento</label><input class="form-input" id="cComp"></div>
                 <div class="form-group"><label class="form-label">Endereço Trabalho</label><input class="form-input" id="cEndTrab"></div>
                 <div class="form-group"><label class="form-label">Complemento Trab.</label><input class="form-input" id="cCompTrab"></div>
+                <div class="form-group"><label class="form-label">Taxa de Entrega (R$)</label><input class="form-input" type="number" step="0.01" id="cTaxa" value="0"></div>
                 <button class="btn btn-black" onclick="saveNewClient()">Salvar</button>
                 <button class="btn btn-outline" style="margin-top:6px;" onclick="closeModal()">Cancelar</button>
             </div>`);
@@ -379,7 +379,8 @@
             endereco: document.getElementById('cEnd').value.trim(),
             complemento: document.getElementById('cComp').value.trim(),
             enderecoTrabalho: document.getElementById('cEndTrab').value.trim(),
-            complementoTrabalho: document.getElementById('cCompTrab').value.trim()
+            complementoTrabalho: document.getElementById('cCompTrab').value.trim(),
+            taxaEntrega: parseFloat(document.getElementById('cTaxa').value) || 0
         });
         closeModal(); showToast('Cliente adicionado!');
     }
@@ -395,6 +396,7 @@
                 <div class="form-group"><label class="form-label">Complemento</label><input class="form-input" id="eComp" value="${c.complemento||''}"></div>
                 <div class="form-group"><label class="form-label">End. Trabalho</label><input class="form-input" id="eEndTrab" value="${c.enderecoTrabalho||''}"></div>
                 <div class="form-group"><label class="form-label">Comp. Trab.</label><input class="form-input" id="eCompTrab" value="${c.complementoTrabalho||''}"></div>
+                <div class="form-group"><label class="form-label">Taxa de Entrega (R$)</label><input class="form-input" type="number" step="0.01" id="eTaxa" value="${c.taxaEntrega||0}"></div>
                 <button class="btn btn-black" onclick="updateClient('${id}')">Salvar</button>
                 <button class="btn btn-danger" style="margin-top:6px;" onclick="deleteClient('${id}')">Excluir</button>
                 <button class="btn btn-outline" style="margin-top:6px;" onclick="closeModal()">Cancelar</button>
@@ -408,7 +410,8 @@
             endereco: document.getElementById('eEnd').value.trim(),
             complemento: document.getElementById('eComp').value.trim(),
             enderecoTrabalho: document.getElementById('eEndTrab').value.trim(),
-            complementoTrabalho: document.getElementById('eCompTrab').value.trim()
+            complementoTrabalho: document.getElementById('eCompTrab').value.trim(),
+            taxaEntrega: parseFloat(document.getElementById('eTaxa').value) || 0
         });
         closeModal(); showToast('Cliente atualizado!');
     }
@@ -425,12 +428,12 @@
             <div class="modal-handle"></div><div class="modal-content">
                 <h3>Nova Entrega</h3>
                 <div class="form-group"><label class="form-label">Cliente</label>
-                    <select class="form-input" id="selCliente">${opts}</select>
+                    <select class="form-input" id="selCliente" onchange="preencherTaxa()">${opts}</select>
                 </div>
                 <div class="form-group"><label class="form-label">Endereço</label>
                     <select class="form-input" id="selEndereco"><option value="residencial">Residencial</option><option value="trabalho">Trabalho</option></select>
                 </div>
-                <div class="form-group"><label class="form-label">Valor (R$)</label><input class="form-input" type="number" step="0.01" id="entregaValor"></div>
+                <div class="form-group"><label class="form-label">Valor (R$)</label><input class="form-input" type="number" step="0.01" id="entregaValor" value="0"></div>
                 <div class="form-group"><label class="form-label">Pagamento</label>
                     <select class="form-input" id="entregaPgto" onchange="toggleTroco()">
                         <option value="dinheiro">Dinheiro</option><option value="cartao">Cartão</option><option value="pix">Pix</option>
@@ -440,11 +443,22 @@
                 <button class="btn btn-black" onclick="saveNovaEntrega()">Salvar Entrega</button>
                 <button class="btn btn-outline" style="margin-top:6px;" onclick="closeModal()">Cancelar</button>
             </div>`);
+        // Preencher taxa automaticamente ao abrir
+        setTimeout(preencherTaxa, 100);
+    }
+
+    function preencherTaxa() {
+        const sel = document.getElementById('selCliente');
+        const valInput = document.getElementById('entregaValor');
+        if (!sel || !valInput) return;
+        const cliente = allClients.find(c => c.id === sel.value);
+        if (cliente) valInput.value = cliente.taxaEntrega || 0;
     }
 
     function toggleTroco() {
         const pgto = document.getElementById('entregaPgto')?.value;
-        document.getElementById('grupoTroco').style.display = pgto==='dinheiro'?'block':'none';
+        const grupo = document.getElementById('grupoTroco');
+        if (grupo) grupo.style.display = pgto==='dinheiro'?'block':'none';
     }
 
     async function saveNovaEntrega() {
