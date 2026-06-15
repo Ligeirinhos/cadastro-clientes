@@ -9,7 +9,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-title" content="Insalata">
-    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%237c3aed' width='100' height='100' rx='20'/><circle cx='50' cy='38' r='16' fill='white'/><ellipse cx='50' cy='78' rx='28' ry='22' fill='white'/></svg>">
+    <!-- Ícone de salada personalizado -->
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%237c3aed' width='100' height='100' rx='20'/><path d='M30 70 Q50 20 70 70 Q50 90 30 70' fill='white'/></svg>">
 
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -93,7 +94,11 @@
             border-radius:var(--radius); padding:14px;
             display:flex; align-items:center; gap:12px;
             box-shadow:var(--shadow); cursor:pointer;
+            border-left: 4px solid var(--border); /* borda padrão */
         }
+        .entrega-row.apagar { border-left-color: #ffc107; }   /* laranja */
+        .entrega-row.pago { border-left-color: #4caf50; }     /* verde */
+
         .checkbox { width:20px; height:20px; accent-color: var(--primary); flex-shrink:0; }
         .info { flex:1; min-width:0; }
         .name { font-weight:600; font-size:0.95rem; color: var(--text); }
@@ -332,10 +337,11 @@
         [...pendentes, ...entregues].forEach(e => {
             const addr = e.enderecoSelecionado==='trabalho' ? (e.enderecoTrabalho||e.endereco) : e.endereco;
             const pagStatus = e.statusPagamento==='pago' ? 'Pago' : 'A pagar';
-            const badgePag = e.statusPagamento==='pago' ? 'badge-pago' : 'badge-apagar';
-            const pag = `${e.pagamento} · <span class="badge ${badgePag}">${pagStatus}</span>`;
+            const classeStatus = e.statusPagamento==='pago' ? 'pago' : 'apagar';
+            const badgeClass = e.statusPagamento==='pago' ? 'badge-pago' : 'badge-apagar';
+            const pag = `${e.pagamento} · <span class="badge ${badgeClass}">${pagStatus}</span>`;
             html += `
-                <div class="entrega-row">
+                <div class="entrega-row ${classeStatus}">
                     <input type="checkbox" class="checkbox-entrega" data-id="${e.id}" ${e.status==='entregue'?'disabled':''}>
                     <div class="info" onclick="openEditEntregaModal('${e.id}')">
                         <div class="name">${e.nome} <span class="badge badge-${e.status}">${e.status}</span></div>
