@@ -81,7 +81,7 @@
 
         .search-box {
             width:100%; padding:10px 16px 10px 40px; border:2px solid var(--border);
-            border-radius:24px; font-size:0.95rem; background:var(--input-bg);
+            border-radius:24px; font-size:0.95rem; background:var(--input-bg); color:var(--text);
             background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%237c3aed' stroke-width='2.5'><circle cx='11' cy='11' r='8'/><line x1='21' y1='21' x2='16.65' y2='16.65'/></svg>");
             background-repeat:no-repeat; background-position:14px center;
         }
@@ -96,11 +96,13 @@
         }
         .checkbox { width:20px; height:20px; accent-color: var(--primary); flex-shrink:0; }
         .info { flex:1; min-width:0; }
-        .name { font-weight:600; font-size:0.95rem; }
-        .detail { font-size:0.8rem; color:var(--text-secondary); }
+        .name { font-weight:600; font-size:0.95rem; color: var(--text); }
+        .detail { font-size:0.8rem; color: var(--text-secondary); }
         .badge { font-size:0.7rem; padding:2px 8px; border-radius:12px; font-weight:600; }
         .badge-pendente { background:#fff3cd; color:#856404; }
         .badge-entregue { background:#d4edda; color:#155724; }
+        .badge-pago { background:#d4edda; color:#155724; }
+        .badge-apagar { background:#ffeeba; color:#856404; }
 
         .fab {
             position:fixed; bottom:24px; right:24px;
@@ -122,10 +124,10 @@
         .modal-handle { width:36px; height:4px; background:#ccc; border-radius:2px; margin:12px auto 8px; }
         .modal-content { padding:0 20px 20px; }
         .form-group { margin-bottom:14px; }
-        .form-label { display:block; font-size:0.75rem; font-weight:600; color:var(--text-secondary); margin-bottom:4px; text-transform:uppercase; }
+        .form-label { display:block; font-size:0.75rem; font-weight:600; color: var(--text-secondary); margin-bottom:4px; text-transform:uppercase; }
         .form-input, .form-textarea {
             width:100%; padding:12px; border:2px solid var(--border);
-            border-radius:var(--radius); font-size:0.95rem; background:var(--input-bg);
+            border-radius:var(--radius); font-size:0.95rem; background:var(--input-bg); color:var(--text);
         }
         .btn { padding:12px; border-radius:var(--radius); font-weight:600; cursor:pointer; border:none; width:100%; font-size:0.95rem; }
         .btn-primary { background: var(--primary); color: #fff; }
@@ -200,7 +202,6 @@
             });
 
         const hoje = new Date().toISOString().slice(0,10);
-        // Removemos o orderBy para não exigir índice composto; ordenaremos localmente
         unsubscribeEntregas = db.collection('users').doc(uid).collection('entregas')
             .where('data', '==', hoje)
             .onSnapshot(snap => {
@@ -307,6 +308,7 @@
                 valor: cliente.taxaEntrega || 0,
                 pagamento: 'dinheiro',
                 troco: '',
+                statusPagamento: 'apagar',
                 status: 'pendente',
                 data: hoje,
                 criadoEm: criadoEm,
@@ -321,12 +323,17 @@
 
     // ======== ENTREGAS ========
     function renderEntregas() {
-        let pendentes = allEntregas.filter(e => e.status==='pendente');
-        let entregues = allEntregas.filter(e => e.status==='entregue');
-        let html = `<div class="stats">📦 ${pendentes.length} pendentes · ✅ ${entregues.length} entregues</div><div class="entrega-list">`;
+        const pendentes = allEntregas.filter(e => e.status==='pendente');
+        const entregues = allEntregas.filter(e => e.status==='entregue');
+        const somaPendentes = pendentes.reduce((acc, e) => acc + (parseFloat(e.valor)||0), 0);
+        const somaEntregues = entregues.reduce((acc, e) => acc + (parseFloat(e.valor)||0), 0);
+
+        let html = `<div class="stats">📦 ${pendentes.length} pendentes (R$ ${somaPendentes.toFixed(2)}) · ✅ ${entregues.length} entregues (R$ ${somaEntregues.toFixed(2)})</div><div class="entrega-list">`;
         [...pendentes, ...entregues].forEach(e => {
             const addr = e.enderecoSelecionado==='trabalho' ? (e.enderecoTrabalho||e.endereco) : e.endereco;
-            const pag = e.pagamento==='dinheiro'?`Dinheiro${e.troco?' (Troco: R$'+e.troco+')':''}`:e.pagamento;
+            const pagStatus = e.statusPagamento==='pago' ? 'Pago' : 'A pagar';
+            const badgePag = e.statusPagamento==='pago' ? 'badge-pago' : 'badge-apagar';
+            const pag = `${e.pagamento} · <span class="badge ${badgePag}">${pagStatus}</span>`;
             html += `
                 <div class="entrega-row">
                     <input type="checkbox" class="checkbox-entrega" data-id="${e.id}" ${e.status==='entregue'?'disabled':''}>
@@ -455,6 +462,13 @@
                     </select>
                 </div>
                 <div class="form-group" id="grupoTroco"><label class="form-label">Troco (R$)</label><input class="form-input" type="number" step="0.01" id="entregaTroco"></div>
+                <div class="form-group">
+                    <label class="form-label">Status Pagamento</label>
+                    <select class="form-input" id="statusPagamento">
+                        <option value="apagar">A pagar</option>
+                        <option value="pago">Pago</option>
+                    </select>
+                </div>
                 <button class="btn btn-primary" onclick="saveNovaEntrega()">Salvar Entrega</button>
                 <button class="btn btn-outline" style="margin-top:6px;" onclick="closeModal()">Cancelar</button>
             </div>`);
@@ -492,6 +506,7 @@
             valor: parseFloat(document.getElementById('entregaValor').value)||0,
             pagamento: document.getElementById('entregaPgto').value,
             troco: document.getElementById('entregaTroco')?.value||'',
+            statusPagamento: document.getElementById('statusPagamento').value,
             status: 'pendente',
             data: hoje,
             criadoEm: criadoEm,
@@ -513,17 +528,33 @@
                 </div>
                 <div class="form-group"><label class="form-label">Valor</label><input class="form-input" type="number" step="0.01" id="editValor" value="${e.valor||0}"></div>
                 <div class="form-group"><label class="form-label">Pagamento</label>
-                    <select class="form-input" id="editPgto">
+                    <select class="form-input" id="editPgto" onchange="toggleTrocoEdit()">
                         <option value="dinheiro" ${e.pagamento==='dinheiro'?'selected':''}>Dinheiro</option>
                         <option value="cartao" ${e.pagamento==='cartao'?'selected':''}>Cartão</option>
                         <option value="pix" ${e.pagamento==='pix'?'selected':''}>Pix</option>
                     </select>
                 </div>
-                <div class="form-group"><label class="form-label">Troco</label><input class="form-input" type="number" step="0.01" id="editTroco" value="${e.troco||''}"></div>
+                <div class="form-group" id="grupoTrocoEdit" style="${e.pagamento!=='dinheiro'?'display:none;':''}">
+                    <label class="form-label">Troco (R$)</label>
+                    <input class="form-input" type="number" step="0.01" id="editTroco" value="${e.troco||''}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Status Pagamento</label>
+                    <select class="form-input" id="editStatusPagamento">
+                        <option value="apagar" ${e.statusPagamento!=='pago'?'selected':''}>A pagar</option>
+                        <option value="pago" ${e.statusPagamento==='pago'?'selected':''}>Pago</option>
+                    </select>
+                </div>
                 <button class="btn btn-primary" onclick="updateEntrega('${id}')">Salvar</button>
                 <button class="btn btn-danger" style="margin-top:6px;" onclick="deleteEntrega('${id}')">Excluir</button>
                 <button class="btn btn-outline" style="margin-top:6px;" onclick="closeModal()">Cancelar</button>
             </div>`);
+    }
+
+    function toggleTrocoEdit() {
+        const pgto = document.getElementById('editPgto')?.value;
+        const grupo = document.getElementById('grupoTrocoEdit');
+        if (grupo) grupo.style.display = pgto==='dinheiro'?'block':'none';
     }
 
     async function updateEntrega(id) {
@@ -531,7 +562,8 @@
             enderecoSelecionado: document.getElementById('editEndereco').value,
             valor: parseFloat(document.getElementById('editValor').value)||0,
             pagamento: document.getElementById('editPgto').value,
-            troco: document.getElementById('editTroco').value
+            troco: document.getElementById('editTroco')?.value||'',
+            statusPagamento: document.getElementById('editStatusPagamento').value
         });
         closeModal(); showToast('Entrega atualizada!');
     }
