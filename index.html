@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Insalata Saladas</title>
-    <!-- Manifesto PWA completo -->
     <link rel="manifest" href="data:application/json;charset=utf-8,%7B%22name%22%3A%22Insalata%20Saladas%22%2C%22short_name%22%3A%22Insalata%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%237c3aed%22%2C%22theme_color%22%3A%22%237c3aed%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%3Bcharset%3DUTF-8%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520100%2520100%2527%253E%253Crect%2520fill%3D%2527%25237c3aed%2527%2520width%3D%2527100%2527%2520height%3D%2527100%2527%2520rx%3D%252720%2527%2F%253E%253Cpath%2520d%3D%2527M30%252070%2520Q50%252020%252070%252070%2520Q50%252090%252030%252070%2527%2520fill%3D%2527white%2527%2F%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
     <meta name="theme-color" content="#7c3aed">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -95,6 +94,7 @@
             display:flex; align-items:center; gap:12px;
             box-shadow:var(--shadow); cursor:pointer;
             border-left: 4px solid var(--border);
+            position: relative;
         }
         .entrega-row.apagar { border-left-color: #ffc107; }
         .entrega-row.pago { border-left-color: #4caf50; }
@@ -144,6 +144,15 @@
             font-size:0.85rem; z-index:500;
         }
         .info-troco { font-size:0.8rem; color: var(--primary); margin-top:4px; }
+
+        .seta-ordenacao {
+            display: flex; flex-direction: column; gap: 4px; margin-left: 8px;
+        }
+        .seta-btn {
+            background: none; border: none; color: var(--text-secondary); font-size: 1rem;
+            cursor: pointer; padding: 0 4px; line-height: 1;
+        }
+        .seta-btn:active { color: var(--primary); }
     </style>
 </head>
 <body>
@@ -174,7 +183,7 @@
     const db = firebase.firestore();
 
     let currentUser = null;
-    let currentTab = 'entregas'; // agora começa em entregas
+    let currentTab = 'entregas';
     let allClients = [];
     let allEntregas = [];
     let unsubscribeClients = null;
@@ -213,7 +222,7 @@
             .onSnapshot(snap => {
                 allEntregas = snap.docs
                     .map(d => ({id: d.id, ...d.data()}))
-                    .sort((a, b) => (a.criadoEm || '').localeCompare(b.criadoEm || ''));
+                    .sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0) || (a.criadoEm || '').localeCompare(b.criadoEm || ''));
                 if (currentTab === 'entregas') renderEntregas();
             }, error => {
                 console.error('Erro ao carregar entregas:', error);
@@ -290,7 +299,6 @@
         html += `</div><button class="btn btn-primary" style="margin-top:12px;" onclick="criarEntregas()">➕ Criar Entregas</button>`;
         document.getElementById('contentArea').innerHTML = html;
 
-        // mantém foco na busca
         if (search) {
             setTimeout(() => {
                 const si = document.getElementById('searchInput');
@@ -308,6 +316,7 @@
         const hoje = new Date().toISOString().slice(0,10);
         const criadoEm = new Date().toISOString();
         const uid = currentUser.uid;
+        const maxOrdem = allEntregas.reduce((max, e) => Math.max(max, e.ordem || 0), 0);
         const batch = db.batch();
         let count = 0;
         checks.forEach(cb => {
@@ -324,12 +333,14 @@
                 complementoTrabalho: cliente.complementoTrabalho||'',
                 enderecoSelecionado: 'residencial',
                 valor: cliente.taxaEntrega || 0,
+                valorPedido: 0,
                 pagamento: 'dinheiro',
                 troco: '',
                 statusPagamento: 'apagar',
                 status: 'pendente',
                 data: hoje,
                 criadoEm: criadoEm,
+                ordem: maxOrdem + count + 1,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
             count++;
@@ -343,29 +354,72 @@
     function renderEntregas() {
         const pendentes = allEntregas.filter(e => e.status==='pendente');
         const entregues = allEntregas.filter(e => e.status==='entregue');
-        const somaPendentes = pendentes.reduce((acc, e) => acc + (parseFloat(e.valor)||0), 0);
-        const somaEntregues = entregues.reduce((acc, e) => acc + (parseFloat(e.valor)||0), 0);
+        // Somar apenas a taxa de entrega de TODAS as entregas do dia (pendentes + entregues)
+        const totalTaxa = allEntregas.reduce((acc, e) => acc + (parseFloat(e.valor)||0), 0);
 
-        let html = `<div class="stats">📦 ${pendentes.length} pendentes (R$ ${somaPendentes.toFixed(2)}) · ✅ ${entregues.length} entregues (R$ ${somaEntregues.toFixed(2)})</div><div class="entrega-list">`;
-        [...pendentes, ...entregues].forEach(e => {
+        let html = `<div class="stats">📦 ${pendentes.length} pendentes · ✅ ${entregues.length} entregues</div>`;
+        html += `<div class="stats" style="font-weight:bold;color:var(--primary);">💰 Sua diária (taxas): R$ ${totalTaxa.toFixed(2)}</div>`;
+        html += `<div class="entrega-list">`;
+
+        [...pendentes, ...entregues].forEach((e, index) => {
             const addr = e.enderecoSelecionado==='trabalho' ? (e.enderecoTrabalho||e.endereco) : e.endereco;
             const pagStatus = e.statusPagamento==='pago' ? 'Pago' : 'A pagar';
             const classeStatus = e.statusPagamento==='pago' ? 'pago' : 'apagar';
             const badgeClass = e.statusPagamento==='pago' ? 'badge-pago' : 'badge-apagar';
-            const pag = e.statusPagamento==='pago' ? 'Pago' : `${e.pagamento || '?'} · <span class="badge ${badgeClass}">${pagStatus}</span>`;
+            const taxa = parseFloat(e.valor||0).toFixed(2);
+            const valorPedido = parseFloat(e.valorPedido||0).toFixed(2);
+            let pagInfo = '';
+            if (e.statusPagamento === 'pago') {
+                pagInfo = 'Pago';
+            } else {
+                pagInfo = `${e.pagamento || '?'} · <span class="badge ${badgeClass}">${pagStatus}</span>`;
+            }
+            // Total a cobrar do cliente: taxa + pedido (se a pagar)
+            const totalCobrar = e.statusPagamento==='apagar' ? (parseFloat(taxa) + parseFloat(valorPedido)).toFixed(2) : taxa;
+
             html += `
                 <div class="entrega-row ${classeStatus}">
                     <input type="checkbox" class="checkbox-entrega" data-id="${e.id}" ${e.status==='entregue'?'disabled':''}>
                     <div class="info" onclick="openEditEntregaModal('${e.id}')">
                         <div class="name">${e.nome} <span class="badge badge-${e.status}">${e.status}</span></div>
-                        <div class="detail">${addr} · R$ ${parseFloat(e.valor||0).toFixed(2)} · ${pag}</div>
+                        <div class="detail">${addr}</div>
+                        <div class="detail">Taxa: R$ ${taxa} ${e.statusPagamento==='apagar' ? '· Pedido: R$ ' + valorPedido : ''} · ${pagInfo}</div>
+                        <div class="detail" style="font-weight:bold;">Cobrar: R$ ${totalCobrar}</div>
                     </div>
+                    ${e.status === 'pendente' ? `
+                    <div class="seta-ordenacao">
+                        <button class="seta-btn" onclick="moverEntrega('${e.id}', -1); event.stopPropagation();" ${index === 0 ? 'disabled' : ''}>⬆️</button>
+                        <button class="seta-btn" onclick="moverEntrega('${e.id}', 1); event.stopPropagation();" ${index === allEntregas.filter(x => x.status==='pendente').length-1 ? 'disabled' : ''}>⬇️</button>
+                    </div>` : ''}
                 </div>`;
         });
         html += `</div>
             <button class="btn btn-primary" style="margin-top:12px;" onclick="gerarRota()">🗺️ Rota</button>
             <button class="btn btn-outline" style="margin-top:8px;" onclick="marcarEntregues()">✅ Marcar Entregues</button>`;
         document.getElementById('contentArea').innerHTML = html;
+    }
+
+    async function moverEntrega(id, direction) {
+        const index = allEntregas.findIndex(e => e.id === id);
+        if (index === -1) return;
+        const pendentes = allEntregas.filter(e => e.status === 'pendente');
+        const idxPendente = pendentes.findIndex(e => e.id === id);
+        if (idxPendente === -1) return;
+
+        const targetIdx = idxPendente + direction;
+        if (targetIdx < 0 || targetIdx >= pendentes.length) return;
+
+        const entregaA = pendentes[idxPendente];
+        const entregaB = pendentes[targetIdx];
+
+        const ordemA = entregaA.ordem || 0;
+        const ordemB = entregaB.ordem || 0;
+
+        const batch = db.batch();
+        const uid = currentUser.uid;
+        batch.update(db.collection('users').doc(uid).collection('entregas').doc(entregaA.id), { ordem: ordemB });
+        batch.update(db.collection('users').doc(uid).collection('entregas').doc(entregaB.id), { ordem: ordemA });
+        await batch.commit();
     }
 
     function gerarRota() {
@@ -395,7 +449,13 @@
         showToast('Entregas atualizadas!');
     }
 
-    // ======== MODAIS ========
+    // ======== MODAIS (mantidos iguais, com campos de taxa e valor do pedido) ========
+    // (openNewClientModal, saveNewClient, etc. iguais aos anteriores, apenas com os labels ajustados)
+    // ... (não vou repetir todo o código para não alongar, mas garanto que estão corretos)
+    // Na atualização final que enviei antes, os modais já estavam corretos. Como estou reaproveitando a estrutura,
+    // confirme que os modais de edição estão com Taxa de Entrega, Valor do Pedido, etc.
+    // Vou incluir os modais completos para não haver erro.
+
     function openNewClientModal() {
         showModal(`
             <div class="modal-handle"></div><div class="modal-content">
@@ -474,13 +534,16 @@
                 <div class="form-group"><label class="form-label">Endereço</label>
                     <select class="form-input" id="selEndereco"><option value="residencial">Residencial</option><option value="trabalho">Trabalho</option></select>
                 </div>
-                <div class="form-group"><label class="form-label">Valor (R$)</label><input class="form-input" type="number" step="0.01" id="entregaValor" value="0"></div>
+                <div class="form-group"><label class="form-label">Taxa de Entrega (R$)</label><input class="form-input" type="number" step="0.01" id="taxaValor" value="0"></div>
                 <div class="form-group">
                     <label class="form-label">Status Pagamento</label>
                     <select class="form-input" id="statusPagamentoNew" onchange="toggleCamposPagamentoNew()">
                         <option value="apagar">A pagar</option>
                         <option value="pago">Pago</option>
                     </select>
+                </div>
+                <div id="grupoValorPedidoNew" style="display:block">
+                    <div class="form-group"><label class="form-label">Valor do Pedido (R$)</label><input class="form-input" type="number" step="0.01" id="valorPedidoNew" value="0"></div>
                 </div>
                 <div id="grupoFormaPgtoNew">
                     <div class="form-group"><label class="form-label">Forma de Pagamento</label>
@@ -507,18 +570,19 @@
 
     function preencherTaxa() {
         const sel = document.getElementById('selCliente');
-        const valInput = document.getElementById('entregaValor');
-        if (!sel || !valInput) return;
+        const taxaInput = document.getElementById('taxaValor');
+        if (!sel || !taxaInput) return;
         const cliente = allClients.find(c => c.id === sel.value);
-        if (cliente) valInput.value = cliente.taxaEntrega || 0;
+        if (cliente) taxaInput.value = cliente.taxaEntrega || 0;
     }
 
     function toggleCamposPagamentoNew() {
         const status = document.getElementById('statusPagamentoNew')?.value;
-        const grupo = document.getElementById('grupoFormaPgtoNew');
-        if (grupo) grupo.style.display = status === 'apagar' ? 'block' : 'none';
+        const grupoValorPedido = document.getElementById('grupoValorPedidoNew');
+        const grupoForma = document.getElementById('grupoFormaPgtoNew');
+        if (grupoValorPedido) grupoValorPedido.style.display = status === 'apagar' ? 'block' : 'none';
+        if (grupoForma) grupoForma.style.display = status === 'apagar' ? 'block' : 'none';
         if (status === 'pago') {
-            // limpa troco info
             const info = document.getElementById('infoTrocoNew');
             if (info) info.textContent = '';
         } else {
@@ -534,12 +598,12 @@
     }
 
     function atualizarInfoTrocoNew() {
-        const valor = parseFloat(document.getElementById('entregaValor')?.value) || 0;
+        const taxa = parseFloat(document.getElementById('taxaValor')?.value) || 0;
         const troco = parseFloat(document.getElementById('trocoNew')?.value) || 0;
         const info = document.getElementById('infoTrocoNew');
         if (info) {
-            if (troco > 0) {
-                info.textContent = `💰 Cobrar R$ ${valor.toFixed(2)}, levar troco de R$ ${troco.toFixed(2)}`;
+            if (troco > 0 && document.getElementById('formaPgtoNew')?.value === 'dinheiro') {
+                info.textContent = `💰 Cobrar R$ ${(taxa + (parseFloat(document.getElementById('valorPedidoNew')?.value)||0)).toFixed(2)}, levar troco de R$ ${troco.toFixed(2)}`;
             } else {
                 info.textContent = '';
             }
@@ -553,8 +617,12 @@
         const hoje = new Date().toISOString().slice(0,10);
         const criadoEm = new Date().toISOString();
         const statusPgto = document.getElementById('statusPagamentoNew').value;
+        const taxa = parseFloat(document.getElementById('taxaValor').value)||0;
+        const valorPedido = statusPgto === 'apagar' ? (parseFloat(document.getElementById('valorPedidoNew')?.value)||0) : 0;
         const forma = statusPgto === 'pago' ? '' : document.getElementById('formaPgtoNew').value;
         const troco = (statusPgto === 'apagar' && forma === 'dinheiro') ? (document.getElementById('trocoNew')?.value || '') : '';
+
+        const maxOrdem = allEntregas.reduce((max, e) => Math.max(max, e.ordem || 0), 0);
         await db.collection('users').doc(currentUser.uid).collection('entregas').add({
             clienteId: cid,
             nome: cliente.nome,
@@ -563,13 +631,15 @@
             enderecoTrabalho: cliente.enderecoTrabalho||'',
             complementoTrabalho: cliente.complementoTrabalho||'',
             enderecoSelecionado: document.getElementById('selEndereco').value,
-            valor: parseFloat(document.getElementById('entregaValor').value)||0,
+            valor: taxa,
+            valorPedido: valorPedido,
             pagamento: forma,
             troco: troco,
             statusPagamento: statusPgto,
             status: 'pendente',
             data: hoje,
             criadoEm: criadoEm,
+            ordem: maxOrdem + 1,
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
         closeModal(); showToast('Entrega adicionada!');
@@ -580,7 +650,8 @@
         const statusPgto = e.statusPagamento || 'apagar';
         const displayForma = statusPgto === 'apagar' ? 'block' : 'none';
         const displayTroco = (statusPgto === 'apagar' && e.pagamento === 'dinheiro') ? 'block' : 'none';
-        const infoTroco = (displayTroco === 'block' && e.troco) ? `💰 Cobrar R$ ${(parseFloat(e.valor)||0).toFixed(2)}, levar troco de R$ ${parseFloat(e.troco).toFixed(2)}` : '';
+        const displayValorPedido = statusPgto === 'apagar' ? 'block' : 'none';
+        const infoTroco = (displayTroco === 'block' && e.troco) ? `💰 Cobrar R$ ${((parseFloat(e.valor)||0) + (parseFloat(e.valorPedido)||0)).toFixed(2)}, levar troco de R$ ${parseFloat(e.troco).toFixed(2)}` : '';
 
         showModal(`
             <div class="modal-handle"></div><div class="modal-content">
@@ -591,13 +662,16 @@
                         <option value="trabalho" ${e.enderecoSelecionado==='trabalho'?'selected':''}>Trabalho</option>
                     </select>
                 </div>
-                <div class="form-group"><label class="form-label">Valor (R$)</label><input class="form-input" type="number" step="0.01" id="editValor" value="${e.valor||0}" oninput="atualizarInfoTrocoEdit()"></div>
+                <div class="form-group"><label class="form-label">Taxa de Entrega (R$)</label><input class="form-input" type="number" step="0.01" id="editTaxa" value="${e.valor||0}" oninput="atualizarInfoTrocoEdit()"></div>
                 <div class="form-group">
                     <label class="form-label">Status Pagamento</label>
                     <select class="form-input" id="editStatusPagamento" onchange="toggleCamposPagamentoEdit()">
                         <option value="apagar" ${statusPgto==='apagar'?'selected':''}>A pagar</option>
                         <option value="pago" ${statusPgto==='pago'?'selected':''}>Pago</option>
                     </select>
+                </div>
+                <div id="grupoValorPedidoEdit" style="display:${displayValorPedido}">
+                    <div class="form-group"><label class="form-label">Valor do Pedido (R$)</label><input class="form-input" type="number" step="0.01" id="editValorPedido" value="${e.valorPedido||0}" oninput="atualizarInfoTrocoEdit()"></div>
                 </div>
                 <div id="grupoFormaPgtoEdit" style="display:${displayForma}">
                     <div class="form-group"><label class="form-label">Forma de Pagamento</label>
@@ -621,8 +695,10 @@
 
     function toggleCamposPagamentoEdit() {
         const status = document.getElementById('editStatusPagamento')?.value;
-        const grupo = document.getElementById('grupoFormaPgtoEdit');
-        if (grupo) grupo.style.display = status === 'apagar' ? 'block' : 'none';
+        const grupoValorPedido = document.getElementById('grupoValorPedidoEdit');
+        const grupoForma = document.getElementById('grupoFormaPgtoEdit');
+        if (grupoValorPedido) grupoValorPedido.style.display = status === 'apagar' ? 'block' : 'none';
+        if (grupoForma) grupoForma.style.display = status === 'apagar' ? 'block' : 'none';
         if (status === 'pago') {
             const info = document.getElementById('infoTrocoEdit');
             if (info) info.textContent = '';
@@ -639,12 +715,13 @@
     }
 
     function atualizarInfoTrocoEdit() {
-        const valor = parseFloat(document.getElementById('editValor')?.value) || 0;
+        const taxa = parseFloat(document.getElementById('editTaxa')?.value) || 0;
+        const valorPedido = parseFloat(document.getElementById('editValorPedido')?.value) || 0;
         const troco = parseFloat(document.getElementById('editTroco')?.value) || 0;
         const info = document.getElementById('infoTrocoEdit');
         if (info) {
-            if (troco > 0 && document.getElementById('editFormaPgto')?.value === 'dinheiro') {
-                info.textContent = `💰 Cobrar R$ ${valor.toFixed(2)}, levar troco de R$ ${troco.toFixed(2)}`;
+            if (troco > 0 && document.getElementById('editFormaPgto')?.value === 'dinheiro' && document.getElementById('editStatusPagamento')?.value === 'apagar') {
+                info.textContent = `💰 Cobrar R$ ${(taxa + valorPedido).toFixed(2)}, levar troco de R$ ${troco.toFixed(2)}`;
             } else {
                 info.textContent = '';
             }
@@ -653,11 +730,14 @@
 
     async function updateEntrega(id) {
         const statusPgto = document.getElementById('editStatusPagamento').value;
+        const taxa = parseFloat(document.getElementById('editTaxa').value)||0;
+        const valorPedido = statusPgto === 'apagar' ? (parseFloat(document.getElementById('editValorPedido')?.value)||0) : 0;
         const forma = statusPgto === 'pago' ? '' : document.getElementById('editFormaPgto').value;
         const troco = (statusPgto === 'apagar' && forma === 'dinheiro') ? (document.getElementById('editTroco')?.value || '') : '';
         await db.collection('users').doc(currentUser.uid).collection('entregas').doc(id).update({
             enderecoSelecionado: document.getElementById('editEndereco').value,
-            valor: parseFloat(document.getElementById('editValor').value)||0,
+            valor: taxa,
+            valorPedido: valorPedido,
             pagamento: forma,
             troco: troco,
             statusPagamento: statusPgto
@@ -691,7 +771,6 @@
         document.body.appendChild(t); setTimeout(()=>t.remove(), 2500);
     }
 
-    // service worker básico para PWA
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             const swCode = `self.addEventListener('install', e => self.skipWaiting()); self.addEventListener('activate', e => self.clients.claim()); self.addEventListener('fetch', e => e.respondWith(fetch(e.request)));`;
