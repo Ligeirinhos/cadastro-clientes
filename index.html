@@ -160,6 +160,33 @@
             border-radius: var(--radius); padding: 12px;
             margin-bottom: 12px; font-size: 0.85rem;
         }
+
+        /* Autocomplete */
+        .autocomplete-container {
+            position: relative;
+        }
+        .sugestoes-lista {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-top: none;
+            border-radius: 0 0 var(--radius) var(--radius);
+            max-height: 180px;
+            overflow-y: auto;
+            z-index: 10;
+            display: none;
+        }
+        .sugestao-item {
+            padding: 10px 12px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .sugestao-item:last-child { border-bottom: none; }
+        .sugestao-item:hover, .sugestao-item:active { background: var(--input-bg); }
     </style>
 </head>
 <body>
@@ -396,7 +423,6 @@
         const pendentes = allEntregas.filter(e => e.status==='pendente');
         const entregues = allEntregas.filter(e => e.status==='entregue');
 
-        // Filtrar por grupo selecionado
         let filteredEntregas = allEntregas;
         if (selectedGroupEntregas !== 'Todos') {
             filteredEntregas = allEntregas.filter(e => e.grupo === selectedGroupEntregas);
@@ -404,10 +430,8 @@
         const filteredPendentes = filteredEntregas.filter(e => e.status==='pendente');
         const filteredEntregues = filteredEntregas.filter(e => e.status==='entregue');
 
-        // Totais gerais (todas as entregas do dia, sem filtro de grupo)
         const totalTaxaGeral = allEntregas.reduce((acc, e) => acc + (parseFloat(e.valor)||0), 0);
 
-        // Relatório por grupo (todas as entregas)
         const mapaGrupos = {};
         allEntregas.forEach(e => {
             const g = e.grupo || 'Sem grupo';
@@ -520,14 +544,20 @@
         showToast('Entregas atualizadas!');
     }
 
-    // ======== MODAIS (com grupo) ========
+    // ======== MODAIS COM AUTOCOMPLETE DE GRUPO ========
     function openNewClientModal() {
         showModal(`
             <div class="modal-handle"></div><div class="modal-content">
                 <h3>Novo Cliente</h3>
                 <div class="form-group"><label class="form-label">Nome *</label><input class="form-input" id="cNome"></div>
                 <div class="form-group"><label class="form-label">Telefone</label><input class="form-input" id="cTel"></div>
-                <div class="form-group"><label class="form-label">Grupo (ex: 🥗 Insalata)</label><input class="form-input" id="cGrupo" placeholder="🥗 Insalata"></div>
+                <div class="form-group">
+                    <label class="form-label">Grupo (ex: 🥗 Insalata)</label>
+                    <div class="autocomplete-container">
+                        <input class="form-input" id="cGrupo" autocomplete="off" oninput="filtrarSugestoesGrupo('cGrupo', 'sugestoesNovo')" onfocus="filtrarSugestoesGrupo('cGrupo', 'sugestoesNovo')" placeholder="Digite ou selecione">
+                        <div id="sugestoesNovo" class="sugestoes-lista"></div>
+                    </div>
+                </div>
                 <div class="form-group"><label class="form-label">Endereço Residencial</label><input class="form-input" id="cEnd"></div>
                 <div class="form-group"><label class="form-label">Complemento</label><input class="form-input" id="cComp"></div>
                 <div class="form-group"><label class="form-label">Endereço Trabalho</label><input class="form-input" id="cEndTrab"></div>
@@ -536,6 +566,10 @@
                 <button class="btn btn-primary" onclick="saveNewClient()">Salvar</button>
                 <button class="btn btn-outline" style="margin-top:6px;" onclick="closeModal()">Cancelar</button>
             </div>`);
+        setTimeout(() => {
+            // Inicializa sugestões se houver valor padrão
+            filtrarSugestoesGrupo('cGrupo', 'sugestoesNovo');
+        }, 100);
     }
 
     async function saveNewClient() {
@@ -560,7 +594,13 @@
                 <h3>Editar Cliente</h3>
                 <div class="form-group"><label class="form-label">Nome</label><input class="form-input" id="eNome" value="${c.nome||''}"></div>
                 <div class="form-group"><label class="form-label">Telefone</label><input class="form-input" id="eTel" value="${c.telefone||''}"></div>
-                <div class="form-group"><label class="form-label">Grupo</label><input class="form-input" id="eGrupo" value="${c.grupo||''}" placeholder="🥗 Insalata"></div>
+                <div class="form-group">
+                    <label class="form-label">Grupo</label>
+                    <div class="autocomplete-container">
+                        <input class="form-input" id="eGrupo" autocomplete="off" value="${c.grupo||''}" oninput="filtrarSugestoesGrupo('eGrupo', 'sugestoesEdit')" onfocus="filtrarSugestoesGrupo('eGrupo', 'sugestoesEdit')" placeholder="Digite ou selecione">
+                        <div id="sugestoesEdit" class="sugestoes-lista"></div>
+                    </div>
+                </div>
                 <div class="form-group"><label class="form-label">Endereço</label><input class="form-input" id="eEnd" value="${c.endereco||''}"></div>
                 <div class="form-group"><label class="form-label">Complemento</label><input class="form-input" id="eComp" value="${c.complemento||''}"></div>
                 <div class="form-group"><label class="form-label">End. Trabalho</label><input class="form-input" id="eEndTrab" value="${c.enderecoTrabalho||''}"></div>
@@ -570,6 +610,9 @@
                 <button class="btn btn-danger" style="margin-top:6px;" onclick="deleteClient('${id}')">Excluir</button>
                 <button class="btn btn-outline" style="margin-top:6px;" onclick="closeModal()">Cancelar</button>
             </div>`);
+        setTimeout(() => {
+            filtrarSugestoesGrupo('eGrupo', 'sugestoesEdit');
+        }, 100);
     }
 
     async function updateClient(id) {
@@ -592,6 +635,37 @@
         closeModal(); showToast('Cliente removido.');
     }
 
+    // ======== AUTOCOMPLETE ========
+    function filtrarSugestoesGrupo(inputId, sugestoesId) {
+        const input = document.getElementById(inputId);
+        const lista = document.getElementById(sugestoesId);
+        if (!input || !lista) return;
+        const termo = input.value.trim().toLowerCase();
+        const grupos = getUniqueGroups();
+        const sugestoes = termo ? grupos.filter(g => g.toLowerCase().includes(termo)) : grupos;
+        if (sugestoes.length === 0 || (sugestoes.length === 1 && sugestoes[0] === termo)) {
+            lista.style.display = 'none';
+            return;
+        }
+        lista.innerHTML = sugestoes.map(g => `<div class="sugestao-item" onclick="selecionarSugestao('${inputId}', '${sugestoesId}', '${g}')">${g}</div>`).join('');
+        lista.style.display = 'block';
+    }
+
+    function selecionarSugestao(inputId, sugestoesId, valor) {
+        const input = document.getElementById(inputId);
+        const lista = document.getElementById(sugestoesId);
+        if (input) input.value = valor;
+        if (lista) lista.style.display = 'none';
+    }
+
+    // Fecha as sugestões ao clicar fora (opcional)
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.autocomplete-container')) {
+            document.querySelectorAll('.sugestoes-lista').forEach(l => l.style.display = 'none');
+        }
+    });
+
+    // ======== MODAIS DE ENTREGA (sem alteração) ========
     function openNewEntregaModal() {
         let opts = allClients.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
         showModal(`
