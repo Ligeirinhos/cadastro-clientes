@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Insalata Saladas</title>
-    <link rel="manifest" href="data:application/json;charset=utf-8,%7B%22name%22%3A%22Insalata%20Saladas%22%2C%22short_name%22%3A%22Insalata%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%237c3aed%22%2C%22theme_color%22%3A%22%237c3aed%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%3Bcharset%3DUTF-8%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520100%2520100%2527%253E%253Crect%2520fill%3D%2527%25237c3aed%2527%2520width%3D%2527100%2527%2520height%3D%2527100%2527%2520rx%3D%252720%2527%2F%253E%253Cpath%2520d%3D%2527M30%252070%2520Q50%252020%252070%252070%2520Q50%252090%252030%252070%2527%2520fill%3D%2527white%2527%2F%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-    <meta name="theme-color" content="#7c3aed">
+    <title>App dos Clientes</title>
+    <link rel="manifest" href="data:application/json;charset=utf-8,%7B%22name%22%3A%22App%20dos%20Clientes%22%2C%22short_name%22%3A%22Clientes%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23000%22%2C%22theme_color%22%3A%22%23000%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%23000' width='100' height='100' rx='20'/%3E%3Ccircle cx='35' cy='35' r='12' fill='white'/%3E%3Ccircle cx='65' cy='35' r='12' fill='white'/%3E%3Cellipse cx='35' cy='75' rx='16' ry='18' fill='white'/%3E%3Cellipse cx='65' cy='75' rx='16' ry='18' fill='white'/%3E%3C/svg%3E%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image/svg+xml%22%7D%5D%7D">
+    <meta name="theme-color" content="#000000">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <meta name="apple-mobile-web-app-title" content="Insalata">
-    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%237c3aed' width='100' height='100' rx='20'/><path d='M30 70 Q50 20 70 70 Q50 90 30 70' fill='white'/></svg>">
+    <meta name="apple-mobile-web-app-title" content="Clientes">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23000' width='100' height='100' rx='20'/><circle cx='35' cy='35' r='12' fill='white'/><circle cx='65' cy='35' r='12' fill='white'/><ellipse cx='35' cy='75' rx='16' ry='18' fill='white'/><ellipse cx='65' cy='75' rx='16' ry='18' fill='white'/></svg>">
 
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -17,36 +17,30 @@
 
     <style>
         :root {
-            --primary: #7c3aed;
-            --primary-hover: #6d28d9;
-            --primary-light: #ede9fe;
-            --primary-text: #ffffff;
-            --bg: #ffffff;
-            --bg-secondary: #f5f3ff;
-            --text: #1a1a1a;
-            --text-secondary: #666;
-            --border: #e0d5f0;
-            --card: #fff;
-            --shadow: 0 2px 8px rgba(124,58,237,0.08);
-            --input-bg: #fff;
+            --bg: #121212;
+            --bg-secondary: #1e1e1e;
+            --text: #e0e0e0;
+            --text-secondary: #a0a0a0;
+            --border: #333;
+            --card: #1e1e1e;
+            --shadow: 0 2px 8px rgba(0,0,0,0.4);
+            --input-bg: #2a2a2a;
             --radius: 10px;
-            --danger: #c00;
+            --danger: #ff4444;
+            --accent: #ffffff;
+            --accent-text: #000;
         }
 
-        @media (prefers-color-scheme: dark) {
+        @media (prefers-color-scheme: light) {
             :root {
-                --primary: #a78bfa;
-                --primary-hover: #8b5cf6;
-                --primary-light: #2e1065;
-                --primary-text: #1e1b4b;
-                --bg: #121212;
-                --bg-secondary: #1e1e2f;
-                --text: #e0e0e0;
-                --text-secondary: #aaa;
-                --border: #333;
-                --card: #1e1e2f;
-                --shadow: 0 2px 8px rgba(0,0,0,0.4);
-                --input-bg: #2a2a3a;
+                --bg: #f5f5f5;
+                --bg-secondary: #fff;
+                --text: #1a1a1a;
+                --text-secondary: #666;
+                --border: #ddd;
+                --card: #fff;
+                --shadow: 0 2px 8px rgba(0,0,0,0.1);
+                --input-bg: #fff;
             }
         }
 
@@ -59,7 +53,7 @@
         .app-container { max-width:500px; margin:0 auto; display:flex; flex-direction:column; min-height:100vh; }
 
         .header {
-            background: var(--primary); color: var(--primary-text);
+            background: #000; color: #fff;
             padding:12px 16px; display:flex; align-items:center; justify-content:space-between;
             position:sticky; top:0; z-index:100;
         }
@@ -75,14 +69,14 @@
             font-weight:600; font-size:0.9rem; border-bottom:2px solid transparent;
             cursor:pointer; transition:0.2s; color: var(--text-secondary);
         }
-        .tab.active { border-bottom-color: var(--primary); color: var(--primary); }
+        .tab.active { border-bottom-color: var(--accent); color: var(--text); }
 
         .content { flex:1; padding:12px 12px 80px; }
 
         .search-box {
             width:100%; padding:10px 16px 10px 40px; border:2px solid var(--border);
             border-radius:24px; font-size:0.95rem; background:var(--input-bg); color:var(--text);
-            background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%237c3aed' stroke-width='2.5'><circle cx='11' cy='11' r='8'/><line x1='21' y1='21' x2='16.65' y2='16.65'/></svg>");
+            background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%23aaa' stroke-width='2.5'><circle cx='11' cy='11' r='8'/><line x1='21' y1='21' x2='16.65' y2='16.65'/></svg>");
             background-repeat:no-repeat; background-position:14px center;
         }
         .stats { font-size:0.85rem; color: var(--text-secondary); margin:8px 0; }
@@ -99,7 +93,7 @@
         .entrega-row.apagar { border-left-color: #ffc107; }
         .entrega-row.pago { border-left-color: #4caf50; }
 
-        .checkbox { width:20px; height:20px; accent-color: var(--primary); flex-shrink:0; }
+        .checkbox { width:20px; height:20px; accent-color: var(--accent); flex-shrink:0; }
         .info { flex:1; min-width:0; }
         .name { font-weight:600; font-size:0.95rem; color: var(--text); }
         .detail { font-size:0.8rem; color: var(--text-secondary); }
@@ -112,13 +106,13 @@
         .fab {
             position:fixed; bottom:24px; right:24px;
             width:56px; height:56px; border-radius:50%;
-            background: var(--primary); color: #fff; border:none;
-            font-size:1.8rem; cursor:pointer; box-shadow:0 4px 16px rgba(124,58,237,0.4);
+            background: var(--accent); color: var(--accent-text); border:none;
+            font-size:1.8rem; cursor:pointer; box-shadow:0 4px 16px rgba(0,0,0,0.3);
             z-index:200;
         }
 
         .modal-overlay {
-            position:fixed; inset:0; background:rgba(0,0,0,0.6);
+            position:fixed; inset:0; background:rgba(0,0,0,0.7);
             z-index:300; display:flex; align-items:flex-end; justify-content:center;
         }
         .modal-sheet {
@@ -126,7 +120,7 @@
             max-height:92vh; border-radius:16px 16px 0 0;
             overflow-y:auto; padding-bottom:24px;
         }
-        .modal-handle { width:36px; height:4px; background:#ccc; border-radius:2px; margin:12px auto 8px; }
+        .modal-handle { width:36px; height:4px; background:#555; border-radius:2px; margin:12px auto 8px; }
         .modal-content { padding:0 20px 20px; }
         .form-group { margin-bottom:14px; }
         .form-label { display:block; font-size:0.75rem; font-weight:600; color: var(--text-secondary); margin-bottom:4px; text-transform:uppercase; }
@@ -135,15 +129,15 @@
             border-radius:var(--radius); font-size:0.95rem; background:var(--input-bg); color:var(--text);
         }
         .btn { padding:12px; border-radius:var(--radius); font-weight:600; cursor:pointer; border:none; width:100%; font-size:0.95rem; }
-        .btn-primary { background: var(--primary); color: #fff; }
-        .btn-outline { background:transparent; border:2px solid var(--primary); color: var(--primary); }
+        .btn-primary { background: var(--accent); color: var(--accent-text); }
+        .btn-outline { background:transparent; border:2px solid var(--accent); color: var(--accent); }
         .btn-danger { background:transparent; border:2px solid var(--danger); color: var(--danger); }
         .toast {
             position:fixed; bottom:90px; left:50%; transform:translateX(-50%);
-            background: var(--primary); color: #fff; padding:10px 22px; border-radius:20px;
+            background: var(--accent); color: var(--accent-text); padding:10px 22px; border-radius:20px;
             font-size:0.85rem; z-index:500;
         }
-        .info-troco { font-size:0.8rem; color: var(--primary); margin-top:4px; }
+        .info-troco { font-size:0.8rem; color: var(--accent); margin-top:4px; }
 
         .seta-ordenacao {
             display: flex; flex-direction: column; gap: 4px; margin-left: 8px;
@@ -152,7 +146,7 @@
             background: none; border: none; color: var(--text-secondary); font-size: 1rem;
             cursor: pointer; padding: 0 4px; line-height: 1;
         }
-        .seta-btn:active { color: var(--primary); }
+        .seta-btn:active { color: var(--accent); }
 
         .grupo-select {
             display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
@@ -161,12 +155,17 @@
             padding: 8px 12px; border: 2px solid var(--border); border-radius: 8px;
             background: var(--input-bg); color: var(--text); font-size: 0.9rem;
         }
+        .relatorio-grupos {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 12px;
+            margin-bottom: 12px; font-size: 0.85rem;
+        }
     </style>
 </head>
 <body>
 <div class="app-container" id="appContainer">
     <div class="header" id="header" style="display:none;">
-        <span class="header-title">🥗 Insalata Saladas</span>
+        <span class="header-title">👥 App dos Clientes</span>
         <button class="header-btn" onclick="handleLogout()" title="Sair">⏻</button>
     </div>
     <div class="tabs" id="tabs" style="display:none;">
@@ -196,7 +195,8 @@
     let allEntregas = [];
     let unsubscribeClients = null;
     let unsubscribeEntregas = null;
-    let selectedGroup = 'Todos'; // novo
+    let selectedGroupClientes = 'Todos';
+    let selectedGroupEntregas = 'Todos';
 
     auth.onAuthStateChanged(user => {
         currentUser = user;
@@ -242,13 +242,13 @@
     function renderLogin() {
         document.getElementById('contentArea').innerHTML = `
             <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;gap:20px;">
-                <div style="font-size:4rem;">🥗</div>
-                <h2 style="color:var(--primary);">Insalata Saladas</h2>
+                <div style="font-size:4rem;">👥</div>
+                <h2>App dos Clientes</h2>
                 <div style="width:100%;max-width:300px;display:flex;flex-direction:column;gap:12px;">
                     <input id="loginEmail" placeholder="Email" class="form-input">
                     <input id="loginPassword" type="password" placeholder="Senha" class="form-input">
                     <button class="btn btn-primary" onclick="handleLogin()">Entrar</button>
-                    <span style="text-align:center;font-size:0.85rem;cursor:pointer;color:var(--primary);" onclick="handleRegister()">Criar conta</span>
+                    <span style="text-align:center;font-size:0.85rem;cursor:pointer;" onclick="handleRegister()">Criar conta</span>
                 </div>
             </div>`;
     }
@@ -284,7 +284,7 @@
         else openNewEntregaModal();
     }
 
-    // ======== CLIENTES (com filtro de grupo) ========
+    // ======== CLIENTES ========
     function getUniqueGroups() {
         const groups = new Set();
         allClients.forEach(c => { if (c.grupo) groups.add(c.grupo); });
@@ -297,17 +297,17 @@
 
         let html = `
             <div class="grupo-select">
-                <select id="grupoFilter" onchange="changeGroup(this.value)">
-                    <option value="Todos" ${selectedGroup==='Todos'?'selected':''}>Todos</option>
-                    ${groups.map(g => `<option value="${g}" ${selectedGroup===g?'selected':''}>${g}</option>`).join('')}
+                <select id="grupoFilterClientes" onchange="changeGroupClientes(this.value)">
+                    <option value="Todos" ${selectedGroupClientes==='Todos'?'selected':''}>Todos</option>
+                    ${groups.map(g => `<option value="${g}" ${selectedGroupClientes===g?'selected':''}>${g}</option>`).join('')}
                 </select>
             </div>
             <input class="search-box" id="searchInput" placeholder="Buscar clientes..." value="${search}" oninput="renderClientes(this.value)">
             <div class="stats">${allClients.length} clientes</div><div class="client-list">`;
 
         let filtered = allClients;
-        if (selectedGroup !== 'Todos') {
-            filtered = filtered.filter(c => c.grupo === selectedGroup);
+        if (selectedGroupClientes !== 'Todos') {
+            filtered = filtered.filter(c => c.grupo === selectedGroupClientes);
         }
         if (search.trim()) {
             const s = search.trim().toLowerCase();
@@ -338,8 +338,8 @@
         }
     }
 
-    function changeGroup(group) {
-        selectedGroup = group;
+    function changeGroupClientes(group) {
+        selectedGroupClientes = group;
         renderClientes();
     }
 
@@ -360,6 +360,7 @@
             batch.set(ref, {
                 clienteId: cid,
                 nome: cliente.nome||'',
+                grupo: cliente.grupo || '',
                 endereco: cliente.endereco||'',
                 complemento: cliente.complemento||'',
                 enderecoTrabalho: cliente.enderecoTrabalho||'',
@@ -384,16 +385,50 @@
     }
 
     // ======== ENTREGAS ========
+    function getUniqueGroupsFromEntregas() {
+        const groups = new Set();
+        allEntregas.forEach(e => { if (e.grupo) groups.add(e.grupo); });
+        return Array.from(groups).sort();
+    }
+
     function renderEntregas() {
+        const groups = getUniqueGroupsFromEntregas();
         const pendentes = allEntregas.filter(e => e.status==='pendente');
         const entregues = allEntregas.filter(e => e.status==='entregue');
-        const totalTaxa = allEntregas.reduce((acc, e) => acc + (parseFloat(e.valor)||0), 0);
 
-        let html = `<div class="stats">📦 ${pendentes.length} pendentes · ✅ ${entregues.length} entregues</div>`;
-        html += `<div class="stats" style="font-weight:bold;color:var(--primary);">💰 Sua diária (taxas): R$ ${totalTaxa.toFixed(2)}</div>`;
-        html += `<div class="entrega-list">`;
+        // Filtrar por grupo selecionado
+        let filteredEntregas = allEntregas;
+        if (selectedGroupEntregas !== 'Todos') {
+            filteredEntregas = allEntregas.filter(e => e.grupo === selectedGroupEntregas);
+        }
+        const filteredPendentes = filteredEntregas.filter(e => e.status==='pendente');
+        const filteredEntregues = filteredEntregas.filter(e => e.status==='entregue');
 
-        [...pendentes, ...entregues].forEach((e, index) => {
+        // Totais gerais (todas as entregas do dia, sem filtro de grupo)
+        const totalTaxaGeral = allEntregas.reduce((acc, e) => acc + (parseFloat(e.valor)||0), 0);
+
+        // Relatório por grupo (todas as entregas)
+        const mapaGrupos = {};
+        allEntregas.forEach(e => {
+            const g = e.grupo || 'Sem grupo';
+            mapaGrupos[g] = (mapaGrupos[g] || 0) + (parseFloat(e.valor)||0);
+        });
+
+        let html = `
+            <div class="grupo-select">
+                <select id="grupoFilterEntregas" onchange="changeGroupEntregas(this.value)">
+                    <option value="Todos" ${selectedGroupEntregas==='Todos'?'selected':''}>Todos</option>
+                    ${groups.map(g => `<option value="${g}" ${selectedGroupEntregas===g?'selected':''}>${g}</option>`).join('')}
+                </select>
+            </div>
+            <div class="stats">📦 ${filteredPendentes.length} pendentes · ✅ ${filteredEntregues.length} entregues</div>
+            <div class="stats" style="font-weight:bold;">💰 Sua diária (taxas): R$ ${totalTaxaGeral.toFixed(2)}</div>
+            <div class="relatorio-grupos">
+                ${Object.entries(mapaGrupos).map(([g, v]) => `<div>${g}: R$ ${v.toFixed(2)}</div>`).join(' · ')}
+            </div>
+            <div class="entrega-list">`;
+
+        [...filteredPendentes, ...filteredEntregues].forEach((e, index) => {
             const addr = e.enderecoSelecionado==='trabalho' ? (e.enderecoTrabalho||e.endereco) : e.endereco;
             const pagStatus = e.statusPagamento==='pago' ? 'Pago' : 'A pagar';
             const classeStatus = e.statusPagamento==='pago' ? 'pago' : 'apagar';
@@ -420,7 +455,7 @@
                     ${e.status === 'pendente' ? `
                     <div class="seta-ordenacao">
                         <button class="seta-btn" onclick="moverEntrega('${e.id}', -1); event.stopPropagation();" ${index === 0 ? 'disabled' : ''}>⬆️</button>
-                        <button class="seta-btn" onclick="moverEntrega('${e.id}', 1); event.stopPropagation();" ${index === allEntregas.filter(x => x.status==='pendente').length-1 ? 'disabled' : ''}>⬇️</button>
+                        <button class="seta-btn" onclick="moverEntrega('${e.id}', 1); event.stopPropagation();" ${index === filteredPendentes.length-1 ? 'disabled' : ''}>⬇️</button>
                     </div>` : ''}
                 </div>`;
         });
@@ -428,6 +463,11 @@
             <button class="btn btn-primary" style="margin-top:12px;" onclick="gerarRota()">🗺️ Rota</button>
             <button class="btn btn-outline" style="margin-top:8px;" onclick="marcarEntregues()">✅ Marcar Entregues</button>`;
         document.getElementById('contentArea').innerHTML = html;
+    }
+
+    function changeGroupEntregas(group) {
+        selectedGroupEntregas = group;
+        renderEntregas();
     }
 
     async function moverEntrega(id, direction) {
@@ -484,10 +524,10 @@
     function openNewClientModal() {
         showModal(`
             <div class="modal-handle"></div><div class="modal-content">
-                <h3 style="color:var(--primary);">Novo Cliente</h3>
+                <h3>Novo Cliente</h3>
                 <div class="form-group"><label class="form-label">Nome *</label><input class="form-input" id="cNome"></div>
                 <div class="form-group"><label class="form-label">Telefone</label><input class="form-input" id="cTel"></div>
-                <div class="form-group"><label class="form-label">Grupo</label><input class="form-input" id="cGrupo" placeholder="Ex: Insalata"></div>
+                <div class="form-group"><label class="form-label">Grupo (ex: 🥗 Insalata)</label><input class="form-input" id="cGrupo" placeholder="🥗 Insalata"></div>
                 <div class="form-group"><label class="form-label">Endereço Residencial</label><input class="form-input" id="cEnd"></div>
                 <div class="form-group"><label class="form-label">Complemento</label><input class="form-input" id="cComp"></div>
                 <div class="form-group"><label class="form-label">Endereço Trabalho</label><input class="form-input" id="cEndTrab"></div>
@@ -503,7 +543,7 @@
         if (!nome) return showToast('Nome obrigatório.');
         await db.collection('users').doc(currentUser.uid).collection('clients').add({
             nome, telefone: document.getElementById('cTel').value.trim(),
-            grupo: document.getElementById('cGrupo').value.trim() || 'Insalata',
+            grupo: document.getElementById('cGrupo').value.trim(),
             endereco: document.getElementById('cEnd').value.trim(),
             complemento: document.getElementById('cComp').value.trim(),
             enderecoTrabalho: document.getElementById('cEndTrab').value.trim(),
@@ -517,10 +557,10 @@
         const c = allClients.find(c=>c.id===id); if(!c) return;
         showModal(`
             <div class="modal-handle"></div><div class="modal-content">
-                <h3 style="color:var(--primary);">Editar Cliente</h3>
+                <h3>Editar Cliente</h3>
                 <div class="form-group"><label class="form-label">Nome</label><input class="form-input" id="eNome" value="${c.nome||''}"></div>
                 <div class="form-group"><label class="form-label">Telefone</label><input class="form-input" id="eTel" value="${c.telefone||''}"></div>
-                <div class="form-group"><label class="form-label">Grupo</label><input class="form-input" id="eGrupo" value="${c.grupo||''}"></div>
+                <div class="form-group"><label class="form-label">Grupo</label><input class="form-input" id="eGrupo" value="${c.grupo||''}" placeholder="🥗 Insalata"></div>
                 <div class="form-group"><label class="form-label">Endereço</label><input class="form-input" id="eEnd" value="${c.endereco||''}"></div>
                 <div class="form-group"><label class="form-label">Complemento</label><input class="form-input" id="eComp" value="${c.complemento||''}"></div>
                 <div class="form-group"><label class="form-label">End. Trabalho</label><input class="form-input" id="eEndTrab" value="${c.enderecoTrabalho||''}"></div>
@@ -556,7 +596,7 @@
         let opts = allClients.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
         showModal(`
             <div class="modal-handle"></div><div class="modal-content">
-                <h3 style="color:var(--primary);">Nova Entrega</h3>
+                <h3>Nova Entrega</h3>
                 <div class="form-group"><label class="form-label">Cliente</label>
                     <select class="form-input" id="selCliente" onchange="preencherTaxa()">${opts}</select>
                 </div>
@@ -655,6 +695,7 @@
         await db.collection('users').doc(currentUser.uid).collection('entregas').add({
             clienteId: cid,
             nome: cliente.nome,
+            grupo: cliente.grupo || '',
             endereco: cliente.endereco||'',
             complemento: cliente.complemento||'',
             enderecoTrabalho: cliente.enderecoTrabalho||'',
@@ -684,7 +725,7 @@
 
         showModal(`
             <div class="modal-handle"></div><div class="modal-content">
-                <h3 style="color:var(--primary);">Editar Entrega</h3>
+                <h3>Editar Entrega</h3>
                 <div class="form-group"><label class="form-label">Endereço</label>
                     <select class="form-input" id="editEndereco">
                         <option value="residencial" ${e.enderecoSelecionado==='residencial'?'selected':''}>Residencial</option>
