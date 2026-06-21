@@ -344,7 +344,7 @@
         filtered.forEach(c => {
             html += `
                 <div class="client-row">
-                    <input type="checkbox" class="checkbox" data-id="${c.id}">
+                    <input type="checkbox" class="client-checkbox" data-id="${c.id}">
                     <div class="info" onclick="openEditClientModal('${c.id}')">
                         <div class="name">${c.nome||'Sem nome'} ${c.grupo ? `<small>(${c.grupo})</small>` : ''}</div>
                         <div class="detail">${c.telefone||''} · Taxa: R$ ${(c.taxaEntrega||0).toFixed(2)}</div>
@@ -371,7 +371,7 @@
     }
 
     async function criarEntregas() {
-        const checks = document.querySelectorAll('.checkbox:checked');
+        const checks = document.querySelectorAll('.client-checkbox:checked');
         if (checks.length===0) return showToast('Selecione ao menos um cliente.');
         const hoje = new Date().toISOString().slice(0,10);
         const criadoEm = new Date().toISOString();
@@ -469,7 +469,7 @@
 
             html += `
                 <div class="entrega-row ${classeStatus}">
-                    <input type="checkbox" class="checkbox-entrega" data-id="${e.id}" ${e.status==='entregue'?'disabled':''}>
+                    <input type="checkbox" class="entrega-checkbox" data-id="${e.id}" ${e.status==='entregue'?'disabled':''}>
                     <div class="info" onclick="openEditEntregaModal('${e.id}')">
                         <div class="name">${e.nome} <span class="badge badge-${e.status}">${e.status}</span></div>
                         <div class="detail">${addr}</div>
@@ -518,7 +518,7 @@
     }
 
     function gerarRota() {
-        const checks = document.querySelectorAll('.checkbox-entrega:checked');
+        const checks = document.querySelectorAll('.entrega-checkbox:checked');
         if (checks.length===0) return showToast('Selecione as entregas para a rota.');
         const selecionadas = Array.from(checks).map(cb => allEntregas.find(e=>e.id===cb.getAttribute('data-id')));
         if (selecionadas.length>10) return showToast('Máximo 10 endereços.');
@@ -532,7 +532,7 @@
     }
 
     async function marcarEntregues() {
-        const checks = document.querySelectorAll('.checkbox-entrega:checked');
+        const checks = document.querySelectorAll('.entrega-checkbox:checked');
         if (checks.length===0) return showToast('Selecione as entregas.');
         const batch = db.batch();
         const uid = currentUser.uid;
@@ -567,7 +567,6 @@
                 <button class="btn btn-outline" style="margin-top:6px;" onclick="closeModal()">Cancelar</button>
             </div>`);
         setTimeout(() => {
-            // Inicializa sugestões se houver valor padrão
             filtrarSugestoesGrupo('cGrupo', 'sugestoesNovo');
         }, 100);
     }
@@ -658,14 +657,13 @@
         if (lista) lista.style.display = 'none';
     }
 
-    // Fecha as sugestões ao clicar fora (opcional)
     document.addEventListener('click', function(e) {
         if (!e.target.closest('.autocomplete-container')) {
             document.querySelectorAll('.sugestoes-lista').forEach(l => l.style.display = 'none');
         }
     });
 
-    // ======== MODAIS DE ENTREGA (sem alteração) ========
+    // ======== MODAIS DE ENTREGA ========
     function openNewEntregaModal() {
         let opts = allClients.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
         showModal(`
@@ -923,4 +921,4 @@
     }
 </script>
 </body>
-</html>
+        </html>
