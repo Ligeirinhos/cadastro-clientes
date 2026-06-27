@@ -236,7 +236,6 @@
     let selectedGroupClientes = 'Todos';
     let selectedGroupEntregas = 'Todos';
 
-    // Guarda estado da busca para evitar perda de foco
     let currentSearchValue = '';
     let searchCursorPos = 0;
 
@@ -326,7 +325,7 @@
         else openNewEntregaModal();
     }
 
-    // ======== CLIENTES (busca aprimorada e sem perder foco) ========
+    // ======== CLIENTES ========
     function getUniqueGroups() {
         const groups = new Set();
         allClients.forEach(c => { if (c.grupo) groups.add(c.grupo); });
@@ -334,7 +333,6 @@
     }
 
     function renderClientes(searchTerm = '') {
-        // Captura o estado atual do input
         const existingInput = document.getElementById('searchInput');
         if (existingInput && document.activeElement === existingInput) {
             currentSearchValue = existingInput.value;
@@ -387,7 +385,6 @@
         html += `</div><button class="btn btn-primary" style="margin-top:12px;" onclick="criarEntregas()">➕ Criar Entregas</button>`;
         document.getElementById('contentArea').innerHTML = html;
 
-        // Restaura foco e posição do cursor
         const newInput = document.getElementById('searchInput');
         if (newInput) {
             newInput.focus();
@@ -444,7 +441,7 @@
         switchTab('entregas');
     }
 
-    // ======== ENTREGAS (botões duplicados) ========
+    // ======== ENTREGAS ========
     function getUniqueGroupsFromEntregas() {
         const groups = new Set();
         allEntregas.forEach(e => { if (e.grupo) groups.add(e.grupo); });
@@ -483,7 +480,6 @@
             <div class="relatorio-grupos">
                 ${Object.entries(mapaGrupos).map(([g, v]) => `<div>${g}: R$ ${v.toFixed(2)}</div>`).join(' · ')}
             </div>
-            <!-- Botões no topo -->
             <div class="top-buttons">
                 <button class="btn btn-primary" onclick="gerarRota()">🗺️ Rota</button>
                 <button class="btn btn-outline" onclick="marcarEntregues()">✅ Marcar Entregues</button>
@@ -522,7 +518,6 @@
                 </div>`;
         });
         html += `</div>
-            <!-- Botões no final -->
             <div class="bottom-buttons">
                 <button class="btn btn-primary" onclick="gerarRota()">🗺️ Rota</button>
                 <button class="btn btn-outline" onclick="marcarEntregues()">✅ Marcar Entregues</button>
@@ -585,7 +580,12 @@
         showToast('Entregas atualizadas!');
     }
 
-    // ======== MODAIS COM AUTOCOMPLETE DE GRUPO ========
+    // ======== MODAIS COM AUTOCOMPLETE CORRIGIDO ========
+    function escapeJsString(str) {
+        // Escapa aspas simples e barra invertida para uso em JavaScript inline
+        return str.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+    }
+
     function openNewClientModal() {
         showModal(`
             <div class="modal-handle"></div><div class="modal-content">
@@ -675,7 +675,7 @@
         closeModal(); showToast('Cliente removido.');
     }
 
-    // ======== AUTOCOMPLETE ========
+    // ======== AUTOCOMPLETE COM ESCAPE ========
     function filtrarSugestoesGrupo(inputId, sugestoesId) {
         const input = document.getElementById(inputId);
         const lista = document.getElementById(sugestoesId);
@@ -687,7 +687,9 @@
             lista.style.display = 'none';
             return;
         }
-        lista.innerHTML = sugestoes.map(g => `<div class="sugestao-item" onclick="selecionarSugestao('${inputId}', '${sugestoesId}', '${g}')">${g}</div>`).join('');
+        lista.innerHTML = sugestoes.map(g => 
+            `<div class="sugestao-item" onclick="selecionarSugestao('${inputId}', '${sugestoesId}', '${escapeJsString(g)}')">${g}</div>`
+        ).join('');
         lista.style.display = 'block';
     }
 
