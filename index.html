@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>App dos Clientes</title>
-    <link rel="manifest" href="data:application/json;charset=utf-8,%7B%22name%22%3A%22App%20dos%20Clientes%22%2C%22short_name%22%3A%22Clientes%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23000%22%2C%22theme_color%22%3A%22%23000%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%23000' width='100' height='100' rx='20'/%3E%3Ccircle cx='35' cy='35' r='12' fill='white'/%3E%3Ccircle cx='65' cy='35' r='12' fill='white'/%3E%3Cellipse cx='35' cy='75' rx='16' ry='18' fill='white'/%3E%3Cellipse cx='65' cy='75' rx='16' ry='18' fill='white'/%3E%3C/svg%3E%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image/svg+xml%22%7D%5D%7D">
+    <link rel="manifest" href="data:application/json;charset=utf-8,%7B%22name%22%3A%22App%20dos%20Clientes%22%2C%22short_name%22%3A%22Clientes%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23000%22%2C%22theme_color%22%3A%22%23000%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAxMDAgMTAwJz48cmVjdCBmaWxsPScjMDAwJyB3aWR0aD0nMTAwJyBoZWlnaHQ9JzEwMCcgcng9JzIwJy8%2BPGNpcmNsZSBjeD0nMzUnIGN5PSczNScgcj0nMTInIGZpbGw9J3doaXRlJy8%2BPGNpcmNsZSBjeD0nNjUnIGN5PSczNScgcj0nMTInIGZpbGw9J3doaXRlJy8%2BPGVsbGlwc2UgY3g9JzM1JyBjeT0nNzUnIHJ4PScxNicgcnk9JzE4JyBmaWxsPSd3aGl0ZScvPjxlbGxpcHNlIGN4PSc2NScgY3k9Jzc1JyByeD0nMTYnIHJ5PScxOCcgZmlsbD0nd2hpdGUnLz48L3N2Zz4%3D%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
     <meta name="theme-color" content="#000000">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-title" content="Clientes">
-    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23000' width='100' height='100' rx='20'/><circle cx='35' cy='35' r='12' fill='white'/><circle cx='65' cy='35' r='12' fill='white'/><ellipse cx='35' cy='75' rx='16' ry='18' fill='white'/><ellipse cx='65' cy='75' rx='16' ry='18' fill='white'/></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAxMDAgMTAwJz48cmVjdCBmaWxsPScjMDAwJyB3aWR0aD0nMTAwJyBoZWlnaHQ9JzEwMCcgcng9JzIwJy8+PGNpcmNsZSBjeD0nMzUnIGN5PSczNScgcj0nMTInIGZpbGw9J3doaXRlJy8+PGNpcmNsZSBjeD0nNjUnIGN5PSczNScgcj0nMTInIGZpbGw9J3doaXRlJy8+PGVsbGlwc2UgY3g9JzM1JyBjeT0nNzUnIHJ4PScxNicgcnk9JzE4JyBmaWxsPSd3aGl0ZScvPjxlbGxpcHNlIGN4PSc2NScgY3k9Jzc1JyByeD0nMTYnIHJ5PScxOCcgZmlsbD0nd2hpdGUnLz48L3N2Zz4=">
 
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -161,7 +161,6 @@
             margin-bottom: 12px; font-size: 0.85rem;
         }
 
-        /* Autocomplete */
         .autocomplete-container {
             position: relative;
         }
@@ -187,6 +186,18 @@
         }
         .sugestao-item:last-child { border-bottom: none; }
         .sugestao-item:hover, .sugestao-item:active { background: var(--input-bg); }
+
+        .top-buttons {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .bottom-buttons {
+            margin-top: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
     </style>
 </head>
 <body>
@@ -224,6 +235,10 @@
     let unsubscribeEntregas = null;
     let selectedGroupClientes = 'Todos';
     let selectedGroupEntregas = 'Todos';
+
+    // Guarda estado da busca para evitar perda de foco
+    let currentSearchValue = '';
+    let searchCursorPos = 0;
 
     auth.onAuthStateChanged(user => {
         currentUser = user;
@@ -311,7 +326,7 @@
         else openNewEntregaModal();
     }
 
-    // ======== CLIENTES ========
+    // ======== CLIENTES (busca aprimorada e sem perder foco) ========
     function getUniqueGroups() {
         const groups = new Set();
         allClients.forEach(c => { if (c.grupo) groups.add(c.grupo); });
@@ -319,7 +334,19 @@
     }
 
     function renderClientes(searchTerm = '') {
-        const search = searchTerm || document.getElementById('searchInput')?.value || '';
+        // Captura o estado atual do input
+        const existingInput = document.getElementById('searchInput');
+        if (existingInput && document.activeElement === existingInput) {
+            currentSearchValue = existingInput.value;
+            searchCursorPos = existingInput.selectionStart || currentSearchValue.length;
+        } else if (searchTerm !== undefined && searchTerm !== '') {
+            currentSearchValue = searchTerm;
+            searchCursorPos = currentSearchValue.length;
+        } else {
+            currentSearchValue = currentSearchValue || '';
+        }
+        const search = currentSearchValue;
+
         const groups = getUniqueGroups();
 
         let html = `
@@ -329,7 +356,7 @@
                     ${groups.map(g => `<option value="${g}" ${selectedGroupClientes===g?'selected':''}>${g}</option>`).join('')}
                 </select>
             </div>
-            <input class="search-box" id="searchInput" placeholder="Buscar clientes..." value="${search}" oninput="renderClientes(this.value)">
+            <input class="search-box" id="searchInput" placeholder="Buscar por nome, endereço, telefone..." value="${search}" oninput="renderClientes()">
             <div class="stats">${allClients.length} clientes</div><div class="client-list">`;
 
         let filtered = allClients;
@@ -338,7 +365,13 @@
         }
         if (search.trim()) {
             const s = search.trim().toLowerCase();
-            filtered = filtered.filter(c => c.nome.toLowerCase().includes(s) || (c.telefone||'').includes(s));
+            filtered = filtered.filter(c => 
+                (c.nome && c.nome.toLowerCase().includes(s)) ||
+                (c.telefone && c.telefone.includes(s)) ||
+                (c.endereco && c.endereco.toLowerCase().includes(s)) ||
+                (c.enderecoTrabalho && c.enderecoTrabalho.toLowerCase().includes(s)) ||
+                (c.grupo && c.grupo.toLowerCase().includes(s))
+            );
         }
         if (filtered.length===0) html += `<div style="text-align:center;color:var(--text-secondary);">Nenhum cliente.</div>`;
         filtered.forEach(c => {
@@ -354,20 +387,20 @@
         html += `</div><button class="btn btn-primary" style="margin-top:12px;" onclick="criarEntregas()">➕ Criar Entregas</button>`;
         document.getElementById('contentArea').innerHTML = html;
 
-        if (search) {
-            setTimeout(() => {
-                const si = document.getElementById('searchInput');
-                if (si) {
-                    si.focus();
-                    si.setSelectionRange(si.value.length, si.value.length);
-                }
-            }, 50);
+        // Restaura foco e posição do cursor
+        const newInput = document.getElementById('searchInput');
+        if (newInput) {
+            newInput.focus();
+            if (search) {
+                newInput.setSelectionRange(searchCursorPos, searchCursorPos);
+            }
         }
     }
 
     function changeGroupClientes(group) {
         selectedGroupClientes = group;
-        renderClientes();
+        currentSearchValue = '';
+        renderClientes('');
     }
 
     async function criarEntregas() {
@@ -411,7 +444,7 @@
         switchTab('entregas');
     }
 
-    // ======== ENTREGAS ========
+    // ======== ENTREGAS (botões duplicados) ========
     function getUniqueGroupsFromEntregas() {
         const groups = new Set();
         allEntregas.forEach(e => { if (e.grupo) groups.add(e.grupo); });
@@ -450,6 +483,11 @@
             <div class="relatorio-grupos">
                 ${Object.entries(mapaGrupos).map(([g, v]) => `<div>${g}: R$ ${v.toFixed(2)}</div>`).join(' · ')}
             </div>
+            <!-- Botões no topo -->
+            <div class="top-buttons">
+                <button class="btn btn-primary" onclick="gerarRota()">🗺️ Rota</button>
+                <button class="btn btn-outline" onclick="marcarEntregues()">✅ Marcar Entregues</button>
+            </div>
             <div class="entrega-list">`;
 
         [...filteredPendentes, ...filteredEntregues].forEach((e, index) => {
@@ -484,8 +522,11 @@
                 </div>`;
         });
         html += `</div>
-            <button class="btn btn-primary" style="margin-top:12px;" onclick="gerarRota()">🗺️ Rota</button>
-            <button class="btn btn-outline" style="margin-top:8px;" onclick="marcarEntregues()">✅ Marcar Entregues</button>`;
+            <!-- Botões no final -->
+            <div class="bottom-buttons">
+                <button class="btn btn-primary" onclick="gerarRota()">🗺️ Rota</button>
+                <button class="btn btn-outline" onclick="marcarEntregues()">✅ Marcar Entregues</button>
+            </div>`;
         document.getElementById('contentArea').innerHTML = html;
     }
 
@@ -921,4 +962,4 @@
     }
 </script>
 </body>
-        </html>
+</html>
