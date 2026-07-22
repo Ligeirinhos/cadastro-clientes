@@ -198,6 +198,29 @@
             flex-direction: column;
             gap: 8px;
         }
+
+        .add-btn {
+            background: transparent;
+            border: 1px dashed var(--border);
+            color: var(--text-secondary);
+            padding: 8px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 0.85rem;
+            margin-top: 4px;
+            width: 100%;
+            text-align: center;
+        }
+        .add-btn:active { background: var(--input-bg); }
+
+        .list-item {
+            display: flex; gap: 8px; align-items: center; margin-bottom: 6px;
+        }
+        .list-item input { flex:1; }
+        .remove-item-btn {
+            background: none; border: none; color: var(--danger);
+            font-size: 1.2rem; cursor: pointer; padding: 4px;
+        }
     </style>
 </head>
 <body>
@@ -239,6 +262,27 @@
     let currentSearchValue = '';
     let searchCursorPos = 0;
 
+    // Converte cliente do formato antigo para o novo
+    function normalizeClient(c) {
+        const client = { ...c };
+        // grupos
+        if (!client.grupos) {
+            if (client.grupo) client.grupos = [client.grupo];
+            else client.grupos = [];
+        }
+        // enderecos
+        if (!client.enderecos) {
+            client.enderecos = [];
+            if (client.endereco) {
+                client.enderecos.push({ apelido: 'Principal', endereco: client.endereco, complemento: client.complemento || '' });
+            }
+            if (client.enderecoTrabalho) {
+                client.enderecos.push({ apelido: 'Trabalho', endereco: client.enderecoTrabalho, complemento: client.complementoTrabalho || '' });
+            }
+        }
+        return client;
+    }
+
     auth.onAuthStateChanged(user => {
         currentUser = user;
         if (user) {
@@ -262,7 +306,7 @@
         const uid = currentUser.uid;
         unsubscribeClients = db.collection('users').doc(uid).collection('clients')
             .orderBy('nome').onSnapshot(snap => {
-                allClients = snap.docs.map(d => ({id: d.id, ...d.data()}));
+                allClients = snap.docs.map(d => normalizeClient({id: d.id, ...d.data()}));
                 if (currentTab === 'clientes') renderClientes();
             });
 
@@ -328,7 +372,7 @@
     // ======== CLIENTES ========
     function getUniqueGroups() {
         const groups = new Set();
-        allClients.forEach(c => { if (c.grupo) groups.add(c.grupo); });
+        allClients.forEach(c => { (c.grupos || []).forEach(g => groups.add(g)); });
         return Array.from(groups).sort();
     }
 
@@ -354,32 +398,36 @@
                     ${groups.map(g => `<option value="${g}" ${selectedGroupClientes===g?'selected':''}>${g}</option>`).join('')}
                 </select>
             </div>
-            <input class="search-box" id="searchInput" placeholder="Buscar por nome, endereço, telefone..." value="${search}" oninput="renderClientes()">
+            <input class="search-box" id="searchInput" placeholder="Buscar por nome, grupo, endereço..." value="${search}" oninput="renderClientes()">
             <div class="stats">${allClients.length} clientes</div><div class="client-list">`;
 
         let filtered = allClients;
         if (selectedGroupClientes !== 'Todos') {
-            filtered = filtered.filter(c => c.grupo === selectedGroupClientes);
+            filtered = filtered.filter(c => (c.grupos || []).includes(selectedGroupClientes));
         }
         if (search.trim()) {
             const s = search.trim().toLowerCase();
             filtered = filtered.filter(c => 
                 (c.nome && c.nome.toLowerCase().includes(s)) ||
                 (c.telefone && c.telefone.includes(s)) ||
-                (c.endereco && c.endereco.toLowerCase().includes(s)) ||
-                (c.enderecoTrabalho && c.enderecoTrabalho.toLowerCase().includes(s)) ||
-                (c.grupo && c.grupo.toLowerCase().includes(s)) ||
+                (c.grupos && c.grupos.some(g => g.toLowerCase().includes(s))) ||
+                (c.enderecos && c.enderecos.some(e => 
+                    (e.endereco && e.endereco.toLowerCase().includes(s)) ||
+                    (e.apelido && e.apelido.toLowerCase().includes(s))
+                )) ||
                 (c.codigoIfood && c.codigoIfood.toLowerCase().includes(s))
             );
         }
         if (filtered.length===0) html += `<div style="text-align:center;color:var(--text-secondary);">Nenhum cliente.</div>`;
         filtered.forEach(c => {
+            const gruposStr = (c.grupos || []).join(', ');
+            const enderecosStr = (c.enderecos || []).map(e => e.apelido).join(', ');
             html += `
                 <div class="client-row">
                     <input type="checkbox" class="client-checkbox" data-id="${c.id}">
                     <div class="info" onclick="openEditClientModal('${c.id}')">
-                        <div class="name">${c.nome||'Sem nome'} ${c.grupo ? `<small>(${c.grupo})</small>` : ''}</div>
-                        <div class="detail">${c.telefone||''} · Taxa: R$ ${(c.taxaEntrega||0).toFixed(2)} ${c.codigoIfood ? '· iFood: ' + c.codigoIfood : ''}</div>
+                        <div class="name">${c.nome||'Sem nome'} ${gruposStr ? `<small>(${gruposStr})</small>` : ''}</div>
+                        <div class="detail">${c.telefone||''} · ${enderecosStr || 'Sem endereço'} ${c.codigoIfood ? '· iFood: ' + c.codigoIfood : ''}</div>
                     </div>
                 </div>`;
         });
@@ -408,30 +456,58 @@
         const criadoEm = new Date().toISOString();
         const uid = currentUser.uid;
         const maxOrdem = allEntregas.reduce((max, e) => Math.max(max, e.ordem || 0), 0);
-        const batch = db.batch();
-        let count = 0;
-        checks.forEach(cb => {
+
+        // Para cada cliente selecionado, precisamos decidir endereço e grupo/taxa.
+        // Se o cliente tiver apenas um endereço e um grupo, usamos diretamente.
+        // Caso contrário, perguntamos em sequência.
+        const selecoes = [];
+        for (const cb of checks) {
             const cid = cb.getAttribute('data-id');
             const cliente = allClients.find(c => c.id===cid);
-            if (!cliente) return;
-            // seleciona taxa baseada no grupo principal do cliente
-            let taxa = cliente.taxaEntrega || 0;
-            if (cliente.grupo === '🥗 Insalata' && cliente.taxaInsalata != null) {
-                taxa = cliente.taxaInsalata;
-            } else if (cliente.grupo === '🍫 Cacau Show' && cliente.taxaCacauShow != null) {
-                taxa = cliente.taxaCacauShow;
+            if (!cliente) continue;
+
+            // Se múltiplos endereços, pergunta
+            let enderecoSelecionado = null;
+            if ((cliente.enderecos || []).length === 1) {
+                enderecoSelecionado = cliente.enderecos[0];
+            } else {
+                enderecoSelecionado = await escolherEndereco(cliente);
+                if (!enderecoSelecionado) continue; // cancelou
             }
+
+            // Se múltiplos grupos, pergunta qual grupo/taxa usar
+            let grupoSelecionado = null;
+            let taxa = cliente.taxaEntrega || 0;
+            if ((cliente.grupos || []).length === 1) {
+                grupoSelecionado = cliente.grupos[0];
+                taxa = getTaxaParaGrupo(cliente, grupoSelecionado);
+            } else {
+                const resultado = await escolherGrupoETaxa(cliente);
+                if (!resultado) continue;
+                grupoSelecionado = resultado.grupo;
+                taxa = resultado.taxa;
+            }
+
+            selecoes.push({ cliente, endereco: enderecoSelecionado, grupo: grupoSelecionado, taxa });
+        }
+
+        if (selecoes.length === 0) {
+            showToast('Nenhuma entrega criada.');
+            return;
+        }
+
+        const batch = db.batch();
+        selecoes.forEach((sel, idx) => {
             const ref = db.collection('users').doc(uid).collection('entregas').doc();
             batch.set(ref, {
-                clienteId: cid,
-                nome: cliente.nome||'',
-                grupo: cliente.grupo || '',
-                endereco: cliente.endereco||'',
-                complemento: cliente.complemento||'',
-                enderecoTrabalho: cliente.enderecoTrabalho||'',
-                complementoTrabalho: cliente.complementoTrabalho||'',
-                enderecoSelecionado: 'residencial',
-                valor: taxa,
+                clienteId: sel.cliente.id,
+                nome: sel.cliente.nome||'',
+                grupo: sel.grupo,
+                endereco: sel.endereco.endereco,
+                complemento: sel.endereco.complemento || '',
+                apelidoEndereco: sel.endereco.apelido || '',
+                enderecoSelecionado: sel.endereco.apelido || '', // compatibilidade
+                valor: sel.taxa,
                 totalPedido: 0,
                 pagamento: 'dinheiro',
                 troco: '',
@@ -439,14 +515,74 @@
                 status: 'pendente',
                 data: hoje,
                 criadoEm: criadoEm,
-                ordem: maxOrdem + count + 1,
+                ordem: maxOrdem + idx + 1,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
-            count++;
         });
         await batch.commit();
-        showToast(`${count} entregas criadas!`);
+        showToast(`${selecoes.length} entregas criadas!`);
         switchTab('entregas');
+    }
+
+    function getTaxaParaGrupo(cliente, grupo) {
+        if (grupo.includes('Insalata') && cliente.taxaInsalata != null) return cliente.taxaInsalata;
+        if (grupo.includes('Cacau Show') && cliente.taxaCacauShow != null) return cliente.taxaCacauShow;
+        return cliente.taxaEntrega || 0;
+    }
+
+    function escolherEndereco(cliente) {
+        return new Promise(resolve => {
+            const enderecos = cliente.enderecos || [];
+            let html = `<div class="modal-handle"></div><div class="modal-content">
+                <h3>Escolha o Endereço</h3>`;
+            enderecos.forEach((e, i) => {
+                html += `<button class="btn btn-outline" style="margin-bottom:8px;" onclick="resolverEndereco('${i}')">${e.apelido}: ${e.endereco} ${e.complemento || ''}</button>`;
+            });
+            html += `<button class="btn btn-danger" style="margin-top:6px;" onclick="cancelarEscolha()">Cancelar</button></div>`;
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            overlay.id = 'modalEndereco';
+            overlay.innerHTML = `<div class="modal-sheet">${html}</div>`;
+            document.body.appendChild(overlay);
+
+            window.resolverEndereco = (idx) => {
+                document.getElementById('modalEndereco').remove();
+                resolve(enderecos[idx]);
+            };
+            window.cancelarEscolha = () => {
+                document.getElementById('modalEndereco').remove();
+                resolve(null);
+            };
+        });
+    }
+
+    function escolherGrupoETaxa(cliente) {
+        return new Promise(resolve => {
+            const grupos = cliente.grupos || [];
+            let html = `<div class="modal-handle"></div><div class="modal-content">
+                <h3>Escolha o Grupo / Taxa</h3>`;
+            grupos.forEach((g, i) => {
+                const taxa = getTaxaParaGrupo(cliente, g);
+                html += `<button class="btn btn-outline" style="margin-bottom:8px;" onclick="resolverGrupo('${i}')">${g} - Taxa: R$ ${taxa.toFixed(2)}</button>`;
+            });
+            html += `<button class="btn btn-danger" style="margin-top:6px;" onclick="cancelarEscolhaGrupo()">Cancelar</button></div>`;
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            overlay.id = 'modalGrupo';
+            overlay.innerHTML = `<div class="modal-sheet">${html}</div>`;
+            document.body.appendChild(overlay);
+
+            window.resolverGrupo = (idx) => {
+                const grupo = grupos[idx];
+                const taxa = getTaxaParaGrupo(cliente, grupo);
+                document.getElementById('modalGrupo').remove();
+                resolve({ grupo, taxa });
+            };
+            window.cancelarEscolhaGrupo = () => {
+                document.getElementById('modalGrupo').remove();
+                resolve(null);
+            };
+        });
     }
 
     // ======== ENTREGAS ========
@@ -495,7 +631,7 @@
             <div class="entrega-list">`;
 
         [...filteredPendentes, ...filteredEntregues].forEach((e, index) => {
-            const addr = e.enderecoSelecionado==='trabalho' ? (e.enderecoTrabalho||e.endereco) : e.endereco;
+            const addr = e.endereco || (e.enderecoSelecionado || '') + (e.complemento ? ' ' + e.complemento : '');
             const pagStatus = e.statusPagamento==='pago' ? 'Pago' : 'A pagar';
             const classeStatus = e.statusPagamento==='pago' ? 'pago' : 'apagar';
             const badgeClass = e.statusPagamento==='pago' ? 'badge-pago' : 'badge-apagar';
@@ -514,7 +650,7 @@
                     <input type="checkbox" class="entrega-checkbox" data-id="${e.id}" ${e.status==='entregue'?'disabled':''}>
                     <div class="info" onclick="openEditEntregaModal('${e.id}')">
                         <div class="name">${e.nome} <span class="badge badge-${e.status}">${e.status}</span></div>
-                        <div class="detail">${addr}</div>
+                        <div class="detail">${addr} (${e.grupo || 'sem grupo'})</div>
                         <div class="detail">Taxa: R$ ${taxa} ${e.statusPagamento==='apagar' ? '· Total Pedido: R$ ' + totalPedido : ''} · ${pagInfo}</div>
                         <div class="detail" style="font-weight:bold;">Cobrar: R$ ${totalCobrar}</div>
                     </div>
@@ -567,8 +703,7 @@
         const selecionadas = Array.from(checks).map(cb => allEntregas.find(e=>e.id===cb.getAttribute('data-id')));
         if (selecionadas.length>10) return showToast('Máximo 10 endereços.');
         const waypoints = selecionadas.map(e => {
-            const addr = e.enderecoSelecionado==='trabalho' ? (e.enderecoTrabalho||e.endereco) : e.endereco;
-            return encodeURIComponent(addr + (e.complemento?' '+e.complemento:''));
+            return encodeURIComponent((e.endereco || '') + (e.complemento ? ' ' + e.complemento : ''));
         });
         const destination = waypoints.pop();
         const url = `https://www.google.com/maps/dir/?api=1&destination=${destination}&waypoints=${waypoints.join('|')}&travelmode=driving`;
@@ -588,7 +723,7 @@
         showToast('Entregas atualizadas!');
     }
 
-    // ======== MODAIS COM CAMPOS FIXOS DE TAXA ========
+    // ======== MODAIS CLIENTE (com endereços e grupos múltiplos) ========
     function escapeJsString(str) {
         return str.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
     }
@@ -600,17 +735,19 @@
                 <div class="form-group"><label class="form-label">Nome *</label><input class="form-input" id="cNome"></div>
                 <div class="form-group"><label class="form-label">Telefone</label><input class="form-input" id="cTel"></div>
                 <div class="form-group">
-                    <label class="form-label">Grupo (ex: 🥗 Insalata)</label>
-                    <div class="autocomplete-container">
-                        <input class="form-input" id="cGrupo" autocomplete="off" oninput="filtrarSugestoesGrupo('cGrupo', 'sugestoesNovo')" onfocus="filtrarSugestoesGrupo('cGrupo', 'sugestoesNovo')" placeholder="Digite ou selecione">
-                        <div id="sugestoesNovo" class="sugestoes-lista"></div>
-                    </div>
+                    <label class="form-label">Código iFood</label>
+                    <input class="form-input" id="cCodigoIfood" placeholder="Código iFood">
                 </div>
-                <div class="form-group"><label class="form-label">Código iFood</label><input class="form-input" id="cCodigoIfood" placeholder="Código iFood"></div>
-                <div class="form-group"><label class="form-label">Endereço Residencial</label><input class="form-input" id="cEnd"></div>
-                <div class="form-group"><label class="form-label">Complemento</label><input class="form-input" id="cComp"></div>
-                <div class="form-group"><label class="form-label">Endereço Trabalho</label><input class="form-input" id="cEndTrab"></div>
-                <div class="form-group"><label class="form-label">Complemento Trab.</label><input class="form-input" id="cCompTrab"></div>
+                <div class="form-group">
+                    <label class="form-label">Grupos</label>
+                    <div id="gruposContainer"></div>
+                    <button type="button" class="add-btn" onclick="adicionarGrupoNovo()">+ Adicionar Grupo</button>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Endereços</label>
+                    <div id="enderecosContainer"></div>
+                    <button type="button" class="add-btn" onclick="adicionarEnderecoNovo()">+ Adicionar Endereço</button>
+                </div>
                 <div class="form-group"><label class="form-label">Taxa de Entrega Padrão (R$)</label><input class="form-input" type="number" step="0.01" id="cTaxa" value="0" placeholder="Taxa para outros grupos"></div>
                 <div class="form-group"><label class="form-label">Taxa 🥗 Insalata (R$)</label><input class="form-input" type="number" step="0.01" id="cTaxaInsalata" value="0"></div>
                 <div class="form-group"><label class="form-label">Taxa 🍫 Cacau Show (R$)</label><input class="form-input" type="number" step="0.01" id="cTaxaCacauShow" value="0"></div>
@@ -618,22 +755,69 @@
                 <button class="btn btn-outline" style="margin-top:6px;" onclick="closeModal()">Cancelar</button>
             </div>`);
         setTimeout(() => {
-            filtrarSugestoesGrupo('cGrupo', 'sugestoesNovo');
+            // garante ao menos um campo de grupo e um de endereço
+            if (document.getElementById('gruposContainer').children.length === 0) adicionarGrupoNovo();
+            if (document.getElementById('enderecosContainer').children.length === 0) adicionarEnderecoNovo();
         }, 100);
+    }
+
+    function adicionarGrupoNovo(valor = '') {
+        const container = document.getElementById('gruposContainer');
+        const div = document.createElement('div');
+        div.className = 'list-item';
+        div.innerHTML = `
+            <div class="autocomplete-container" style="flex:1">
+                <input class="form-input grupo-input" value="${valor}" placeholder="Grupo" oninput="filtrarSugestoesGrupo(this, this.nextElementSibling)" onfocus="filtrarSugestoesGrupo(this, this.nextElementSibling)" autocomplete="off">
+                <div class="sugestoes-lista"></div>
+            </div>
+            <button class="remove-item-btn" onclick="this.parentElement.remove()">✕</button>
+        `;
+        container.appendChild(div);
+    }
+
+    function adicionarEnderecoNovo(apelido = '', endereco = '', complemento = '') {
+        const container = document.getElementById('enderecosContainer');
+        const div = document.createElement('div');
+        div.className = 'list-item';
+        div.style.flexWrap = 'wrap';
+        div.innerHTML = `
+            <input class="form-input" placeholder="Apelido (ex: Casa)" value="${apelido}" style="flex:1; min-width:80px;">
+            <input class="form-input" placeholder="Endereço" value="${endereco}" style="flex:2;">
+            <input class="form-input" placeholder="Complemento" value="${complemento}" style="flex:1;">
+            <button class="remove-item-btn" onclick="this.parentElement.remove()">✕</button>
+        `;
+        container.appendChild(div);
     }
 
     async function saveNewClient() {
         const nome = document.getElementById('cNome').value.trim();
         if (!nome) return showToast('Nome obrigatório.');
 
+        // coleta grupos
+        const grupos = [];
+        document.querySelectorAll('#gruposContainer .grupo-input').forEach(input => {
+            const v = input.value.trim();
+            if (v) grupos.push(v);
+        });
+
+        // coleta endereços
+        const enderecos = [];
+        document.querySelectorAll('#enderecosContainer .list-item').forEach(div => {
+            const inputs = div.querySelectorAll('input');
+            const apelido = inputs[0]?.value.trim();
+            const endereco = inputs[1]?.value.trim();
+            const complemento = inputs[2]?.value.trim();
+            if (apelido && endereco) {
+                enderecos.push({ apelido, endereco, complemento });
+            }
+        });
+
         await db.collection('users').doc(currentUser.uid).collection('clients').add({
-            nome, telefone: document.getElementById('cTel').value.trim(),
-            grupo: document.getElementById('cGrupo').value.trim(),
+            nome,
+            telefone: document.getElementById('cTel').value.trim(),
             codigoIfood: document.getElementById('cCodigoIfood').value.trim(),
-            endereco: document.getElementById('cEnd').value.trim(),
-            complemento: document.getElementById('cComp').value.trim(),
-            enderecoTrabalho: document.getElementById('cEndTrab').value.trim(),
-            complementoTrabalho: document.getElementById('cCompTrab').value.trim(),
+            grupos,
+            enderecos,
             taxaEntrega: parseFloat(document.getElementById('cTaxa').value) || 0,
             taxaInsalata: parseFloat(document.getElementById('cTaxaInsalata').value) || 0,
             taxaCacauShow: parseFloat(document.getElementById('cTaxaCacauShow').value) || 0
@@ -643,23 +827,46 @@
 
     function openEditClientModal(id) {
         const c = allClients.find(c=>c.id===id); if(!c) return;
+
+        let gruposHtml = '';
+        (c.grupos || []).forEach(g => {
+            gruposHtml += `
+                <div class="list-item">
+                    <div class="autocomplete-container" style="flex:1">
+                        <input class="form-input grupo-input" value="${g}" placeholder="Grupo" oninput="filtrarSugestoesGrupo(this, this.nextElementSibling)" onfocus="filtrarSugestoesGrupo(this, this.nextElementSibling)" autocomplete="off">
+                        <div class="sugestoes-lista"></div>
+                    </div>
+                    <button class="remove-item-btn" onclick="this.parentElement.remove()">✕</button>
+                </div>`;
+        });
+
+        let enderecosHtml = '';
+        (c.enderecos || []).forEach(e => {
+            enderecosHtml += `
+                <div class="list-item" style="flex-wrap:wrap;">
+                    <input class="form-input" placeholder="Apelido" value="${e.apelido || ''}" style="flex:1; min-width:80px;">
+                    <input class="form-input" placeholder="Endereço" value="${e.endereco || ''}" style="flex:2;">
+                    <input class="form-input" placeholder="Complemento" value="${e.complemento || ''}" style="flex:1;">
+                    <button class="remove-item-btn" onclick="this.parentElement.remove()">✕</button>
+                </div>`;
+        });
+
         showModal(`
             <div class="modal-handle"></div><div class="modal-content">
                 <h3>Editar Cliente</h3>
                 <div class="form-group"><label class="form-label">Nome</label><input class="form-input" id="eNome" value="${c.nome||''}"></div>
                 <div class="form-group"><label class="form-label">Telefone</label><input class="form-input" id="eTel" value="${c.telefone||''}"></div>
-                <div class="form-group">
-                    <label class="form-label">Grupo</label>
-                    <div class="autocomplete-container">
-                        <input class="form-input" id="eGrupo" autocomplete="off" value="${c.grupo||''}" oninput="filtrarSugestoesGrupo('eGrupo', 'sugestoesEdit')" onfocus="filtrarSugestoesGrupo('eGrupo', 'sugestoesEdit')" placeholder="Digite ou selecione">
-                        <div id="sugestoesEdit" class="sugestoes-lista"></div>
-                    </div>
-                </div>
                 <div class="form-group"><label class="form-label">Código iFood</label><input class="form-input" id="eCodigoIfood" value="${c.codigoIfood||''}"></div>
-                <div class="form-group"><label class="form-label">Endereço</label><input class="form-input" id="eEnd" value="${c.endereco||''}"></div>
-                <div class="form-group"><label class="form-label">Complemento</label><input class="form-input" id="eComp" value="${c.complemento||''}"></div>
-                <div class="form-group"><label class="form-label">End. Trabalho</label><input class="form-input" id="eEndTrab" value="${c.enderecoTrabalho||''}"></div>
-                <div class="form-group"><label class="form-label">Comp. Trab.</label><input class="form-input" id="eCompTrab" value="${c.complementoTrabalho||''}"></div>
+                <div class="form-group">
+                    <label class="form-label">Grupos</label>
+                    <div id="gruposContainerEdit">${gruposHtml}</div>
+                    <button type="button" class="add-btn" onclick="adicionarGrupoEdit()">+ Adicionar Grupo</button>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Endereços</label>
+                    <div id="enderecosContainerEdit">${enderecosHtml}</div>
+                    <button type="button" class="add-btn" onclick="adicionarEnderecoEdit()">+ Adicionar Endereço</button>
+                </div>
                 <div class="form-group"><label class="form-label">Taxa de Entrega Padrão (R$)</label><input class="form-input" type="number" step="0.01" id="eTaxa" value="${c.taxaEntrega||0}"></div>
                 <div class="form-group"><label class="form-label">Taxa 🥗 Insalata (R$)</label><input class="form-input" type="number" step="0.01" id="eTaxaInsalata" value="${c.taxaInsalata||0}"></div>
                 <div class="form-group"><label class="form-label">Taxa 🍫 Cacau Show (R$)</label><input class="form-input" type="number" step="0.01" id="eTaxaCacauShow" value="${c.taxaCacauShow||0}"></div>
@@ -667,21 +874,60 @@
                 <button class="btn btn-danger" style="margin-top:6px;" onclick="deleteClient('${id}')">Excluir</button>
                 <button class="btn btn-outline" style="margin-top:6px;" onclick="closeModal()">Cancelar</button>
             </div>`);
-        setTimeout(() => {
-            filtrarSugestoesGrupo('eGrupo', 'sugestoesEdit');
-        }, 100);
+
+        window.adicionarGrupoEdit = function() {
+            const container = document.getElementById('gruposContainerEdit');
+            const div = document.createElement('div');
+            div.className = 'list-item';
+            div.innerHTML = `
+                <div class="autocomplete-container" style="flex:1">
+                    <input class="form-input grupo-input" placeholder="Grupo" oninput="filtrarSugestoesGrupo(this, this.nextElementSibling)" onfocus="filtrarSugestoesGrupo(this, this.nextElementSibling)" autocomplete="off">
+                    <div class="sugestoes-lista"></div>
+                </div>
+                <button class="remove-item-btn" onclick="this.parentElement.remove()">✕</button>
+            `;
+            container.appendChild(div);
+        };
+
+        window.adicionarEnderecoEdit = function() {
+            const container = document.getElementById('enderecosContainerEdit');
+            const div = document.createElement('div');
+            div.className = 'list-item';
+            div.style.flexWrap = 'wrap';
+            div.innerHTML = `
+                <input class="form-input" placeholder="Apelido" style="flex:1; min-width:80px;">
+                <input class="form-input" placeholder="Endereço" style="flex:2;">
+                <input class="form-input" placeholder="Complemento" style="flex:1;">
+                <button class="remove-item-btn" onclick="this.parentElement.remove()">✕</button>
+            `;
+            container.appendChild(div);
+        };
     }
 
     async function updateClient(id) {
+        const grupos = [];
+        document.querySelectorAll('#gruposContainerEdit .grupo-input').forEach(input => {
+            const v = input.value.trim();
+            if (v) grupos.push(v);
+        });
+
+        const enderecos = [];
+        document.querySelectorAll('#enderecosContainerEdit .list-item').forEach(div => {
+            const inputs = div.querySelectorAll('input');
+            const apelido = inputs[0]?.value.trim();
+            const endereco = inputs[1]?.value.trim();
+            const complemento = inputs[2]?.value.trim();
+            if (apelido && endereco) {
+                enderecos.push({ apelido, endereco, complemento });
+            }
+        });
+
         await db.collection('users').doc(currentUser.uid).collection('clients').doc(id).update({
             nome: document.getElementById('eNome').value.trim(),
             telefone: document.getElementById('eTel').value.trim(),
-            grupo: document.getElementById('eGrupo').value.trim(),
             codigoIfood: document.getElementById('eCodigoIfood').value.trim(),
-            endereco: document.getElementById('eEnd').value.trim(),
-            complemento: document.getElementById('eComp').value.trim(),
-            enderecoTrabalho: document.getElementById('eEndTrab').value.trim(),
-            complementoTrabalho: document.getElementById('eCompTrab').value.trim(),
+            grupos,
+            enderecos,
             taxaEntrega: parseFloat(document.getElementById('eTaxa').value) || 0,
             taxaInsalata: parseFloat(document.getElementById('eTaxaInsalata').value) || 0,
             taxaCacauShow: parseFloat(document.getElementById('eTaxaCacauShow').value) || 0
@@ -695,10 +941,8 @@
         closeModal(); showToast('Cliente removido.');
     }
 
-    // ======== AUTOCOMPLETE ========
-    function filtrarSugestoesGrupo(inputId, sugestoesId) {
-        const input = document.getElementById(inputId);
-        const lista = document.getElementById(sugestoesId);
+    // ======== AUTOCOMPLETE (genérico para qualquer input com sugestões-lista irmão) ========
+    function filtrarSugestoesGrupo(input, lista) {
         if (!input || !lista) return;
         const termo = input.value.trim().toLowerCase();
         const grupos = getUniqueGroups();
@@ -708,15 +952,16 @@
             return;
         }
         lista.innerHTML = sugestoes.map(g => 
-            `<div class="sugestao-item" onclick="selecionarSugestao('${inputId}', '${sugestoesId}', '${escapeJsString(g)}')">${g}</div>`
+            `<div class="sugestao-item" onclick="selecionarSugestao(this, '${escapeJsString(g)}')">${g}</div>`
         ).join('');
         lista.style.display = 'block';
     }
 
-    function selecionarSugestao(inputId, sugestoesId, valor) {
-        const input = document.getElementById(inputId);
-        const lista = document.getElementById(sugestoesId);
+    function selecionarSugestao(elemento, valor) {
+        const container = elemento.closest('.autocomplete-container');
+        const input = container ? container.querySelector('input') : null;
         if (input) input.value = valor;
+        const lista = container ? container.querySelector('.sugestoes-lista') : null;
         if (lista) lista.style.display = 'none';
     }
 
@@ -726,7 +971,7 @@
         }
     });
 
-    // ======== MODAIS DE ENTREGA ========
+    // ======== MODAIS DE ENTREGA (sem alteração nos campos, apenas exibindo apelido) ========
     function openNewEntregaModal() {
         let opts = allClients.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
         showModal(`
@@ -778,12 +1023,11 @@
         if (!sel || !taxaInput) return;
         const cliente = allClients.find(c => c.id === sel.value);
         if (cliente) {
+            // usa o primeiro grupo para preencher (na edição manual não há escolha)
+            const grupo = (cliente.grupos || [])[0] || '';
             let taxa = cliente.taxaEntrega || 0;
-            if (cliente.grupo === '🥗 Insalata' && cliente.taxaInsalata != null) {
-                taxa = cliente.taxaInsalata;
-            } else if (cliente.grupo === '🍫 Cacau Show' && cliente.taxaCacauShow != null) {
-                taxa = cliente.taxaCacauShow;
-            }
+            if (grupo.includes('Insalata') && cliente.taxaInsalata != null) taxa = cliente.taxaInsalata;
+            else if (grupo.includes('Cacau Show') && cliente.taxaCacauShow != null) taxa = cliente.taxaCacauShow;
             taxaInput.value = taxa;
         }
     }
@@ -835,15 +1079,16 @@
         const troco = (statusPgto === 'apagar' && forma === 'dinheiro') ? (document.getElementById('trocoNew')?.value || '') : '';
 
         const maxOrdem = allEntregas.reduce((max, e) => Math.max(max, e.ordem || 0), 0);
+        // para entrega manual, usa o primeiro endereço e primeiro grupo
+        const endereco = (cliente.enderecos || [])[0] || {};
+        const grupo = (cliente.grupos || [])[0] || '';
         await db.collection('users').doc(currentUser.uid).collection('entregas').add({
             clienteId: cid,
             nome: cliente.nome,
-            grupo: cliente.grupo || '',
-            endereco: cliente.endereco||'',
-            complemento: cliente.complemento||'',
-            enderecoTrabalho: cliente.enderecoTrabalho||'',
-            complementoTrabalho: cliente.complementoTrabalho||'',
-            enderecoSelecionado: document.getElementById('selEndereco').value,
+            grupo: grupo,
+            endereco: endereco.endereco || '',
+            complemento: endereco.complemento || '',
+            apelidoEndereco: endereco.apelido || '',
             valor: taxa,
             totalPedido: totalPedido,
             pagamento: forma,
@@ -870,10 +1115,10 @@
             <div class="modal-handle"></div><div class="modal-content">
                 <h3>Editar Entrega</h3>
                 <div class="form-group"><label class="form-label">Endereço</label>
-                    <select class="form-input" id="editEndereco">
-                        <option value="residencial" ${e.enderecoSelecionado==='residencial'?'selected':''}>Residencial</option>
-                        <option value="trabalho" ${e.enderecoSelecionado==='trabalho'?'selected':''}>Trabalho</option>
-                    </select>
+                    <input class="form-input" value="${e.apelidoEndereco || e.enderecoSelecionado || ''}: ${e.endereco || ''} ${e.complemento || ''}" readonly style="background:var(--input-bg);">
+                </div>
+                <div class="form-group"><label class="form-label">Grupo</label>
+                    <input class="form-input" value="${e.grupo || ''}" readonly style="background:var(--input-bg);">
                 </div>
                 <div class="form-group"><label class="form-label">Taxa de Entrega (R$)</label><input class="form-input" type="number" step="0.01" id="editTaxa" value="${e.valor||0}"></div>
                 <div class="form-group">
@@ -947,7 +1192,6 @@
         const forma = statusPgto === 'pago' ? '' : document.getElementById('editFormaPgto').value;
         const troco = (statusPgto === 'apagar' && forma === 'dinheiro') ? (document.getElementById('editTroco')?.value || '') : '';
         await db.collection('users').doc(currentUser.uid).collection('entregas').doc(id).update({
-            enderecoSelecionado: document.getElementById('editEndereco').value,
             valor: taxa,
             totalPedido: totalPedido,
             pagamento: forma,
