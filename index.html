@@ -262,15 +262,12 @@
     let currentSearchValue = '';
     let searchCursorPos = 0;
 
-    // Converte cliente do formato antigo para o novo
     function normalizeClient(c) {
         const client = { ...c };
-        // grupos
         if (!client.grupos) {
             if (client.grupo) client.grupos = [client.grupo];
             else client.grupos = [];
         }
-        // enderecos
         if (!client.enderecos) {
             client.enderecos = [];
             if (client.endereco) {
@@ -457,25 +454,20 @@
         const uid = currentUser.uid;
         const maxOrdem = allEntregas.reduce((max, e) => Math.max(max, e.ordem || 0), 0);
 
-        // Para cada cliente selecionado, precisamos decidir endereço e grupo/taxa.
-        // Se o cliente tiver apenas um endereço e um grupo, usamos diretamente.
-        // Caso contrário, perguntamos em sequência.
         const selecoes = [];
         for (const cb of checks) {
             const cid = cb.getAttribute('data-id');
             const cliente = allClients.find(c => c.id===cid);
             if (!cliente) continue;
 
-            // Se múltiplos endereços, pergunta
             let enderecoSelecionado = null;
             if ((cliente.enderecos || []).length === 1) {
                 enderecoSelecionado = cliente.enderecos[0];
             } else {
                 enderecoSelecionado = await escolherEndereco(cliente);
-                if (!enderecoSelecionado) continue; // cancelou
+                if (!enderecoSelecionado) continue;
             }
 
-            // Se múltiplos grupos, pergunta qual grupo/taxa usar
             let grupoSelecionado = null;
             let taxa = cliente.taxaEntrega || 0;
             if ((cliente.grupos || []).length === 1) {
@@ -506,7 +498,7 @@
                 endereco: sel.endereco.endereco,
                 complemento: sel.endereco.complemento || '',
                 apelidoEndereco: sel.endereco.apelido || '',
-                enderecoSelecionado: sel.endereco.apelido || '', // compatibilidade
+                enderecoSelecionado: sel.endereco.apelido || '',
                 valor: sel.taxa,
                 totalPedido: 0,
                 pagamento: 'dinheiro',
@@ -631,7 +623,7 @@
             <div class="entrega-list">`;
 
         [...filteredPendentes, ...filteredEntregues].forEach((e, index) => {
-            const addr = e.endereco || (e.enderecoSelecionado || '') + (e.complemento ? ' ' + e.complemento : '');
+            const addr = e.endereco || '';
             const pagStatus = e.statusPagamento==='pago' ? 'Pago' : 'A pagar';
             const classeStatus = e.statusPagamento==='pago' ? 'pago' : 'apagar';
             const badgeClass = e.statusPagamento==='pago' ? 'badge-pago' : 'badge-apagar';
@@ -723,43 +715,43 @@
         showToast('Entregas atualizadas!');
     }
 
-    // ======== MODAIS CLIENTE (com endereços e grupos múltiplos) ========
+    // ======== MODAIS CLIENTE ========
     function escapeJsString(str) {
         return str.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
     }
 
     function openNewClientModal() {
-    showModal(`
-        <div class="modal-handle"></div><div class="modal-content">
-            <h3>Novo Cliente</h3>
-            <button class="btn btn-outline" style="margin-bottom:12px;" onclick="openPasteModal()">📋 Colar do WhatsApp / Notas</button>
-            <div class="form-group"><label class="form-label">Nome *</label><input class="form-input" id="cNome"></div>
-            <div class="form-group"><label class="form-label">Telefone</label><input class="form-input" id="cTel"></div>
-            <div class="form-group">
-                <label class="form-label">Código iFood</label>
-                <input class="form-input" id="cCodigoIfood" placeholder="Código iFood">
-            </div>
-            <div class="form-group">
-                <label class="form-label">Grupos</label>
-                <div id="gruposContainer"></div>
-                <button type="button" class="add-btn" onclick="adicionarGrupoNovo()">+ Adicionar Grupo</button>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Endereços</label>
-                <div id="enderecosContainer"></div>
-                <button type="button" class="add-btn" onclick="adicionarEnderecoNovo()">+ Adicionar Endereço</button>
-            </div>
-            <div class="form-group"><label class="form-label">Taxa de Entrega Padrão (R$)</label><input class="form-input" type="number" step="0.01" id="cTaxa" value="0"></div>
-            <div class="form-group"><label class="form-label">Taxa 🥗 Insalata (R$)</label><input class="form-input" type="number" step="0.01" id="cTaxaInsalata" value="0"></div>
-            <div class="form-group"><label class="form-label">Taxa 🍫 Cacau Show (R$)</label><input class="form-input" type="number" step="0.01" id="cTaxaCacauShow" value="0"></div>
-            <button class="btn btn-primary" onclick="saveNewClient()">Salvar</button>
-            <button class="btn btn-outline" style="margin-top:6px;" onclick="closeModal()">Cancelar</button>
-        </div>`);
-    setTimeout(() => {
-        if (document.getElementById('gruposContainer').children.length === 0) adicionarGrupoNovo();
-        if (document.getElementById('enderecosContainer').children.length === 0) adicionarEnderecoNovo();
-    }, 100);
-}
+        showModal(`
+            <div class="modal-handle"></div><div class="modal-content">
+                <h3>Novo Cliente</h3>
+                <button class="btn btn-outline" style="margin-bottom:12px;" onclick="openPasteModal()">📋 Colar do WhatsApp / Notas</button>
+                <div class="form-group"><label class="form-label">Nome *</label><input class="form-input" id="cNome"></div>
+                <div class="form-group"><label class="form-label">Telefone</label><input class="form-input" id="cTel"></div>
+                <div class="form-group">
+                    <label class="form-label">Código iFood</label>
+                    <input class="form-input" id="cCodigoIfood" placeholder="Código iFood">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Grupos</label>
+                    <div id="gruposContainer"></div>
+                    <button type="button" class="add-btn" onclick="adicionarGrupoNovo()">+ Adicionar Grupo</button>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Endereços</label>
+                    <div id="enderecosContainer"></div>
+                    <button type="button" class="add-btn" onclick="adicionarEnderecoNovo()">+ Adicionar Endereço</button>
+                </div>
+                <div class="form-group"><label class="form-label">Taxa de Entrega Padrão (R$)</label><input class="form-input" type="number" step="0.01" id="cTaxa" value="0"></div>
+                <div class="form-group"><label class="form-label">Taxa 🥗 Insalata (R$)</label><input class="form-input" type="number" step="0.01" id="cTaxaInsalata" value="0"></div>
+                <div class="form-group"><label class="form-label">Taxa 🍫 Cacau Show (R$)</label><input class="form-input" type="number" step="0.01" id="cTaxaCacauShow" value="0"></div>
+                <button class="btn btn-primary" onclick="saveNewClient()">Salvar</button>
+                <button class="btn btn-outline" style="margin-top:6px;" onclick="closeModal()">Cancelar</button>
+            </div>`);
+        setTimeout(() => {
+            if (document.getElementById('gruposContainer').children.length === 0) adicionarGrupoNovo();
+            if (document.getElementById('enderecosContainer').children.length === 0) adicionarEnderecoNovo();
+        }, 100);
+    }
 
     function adicionarGrupoNovo(valor = '') {
         const container = document.getElementById('gruposContainer');
@@ -793,146 +785,12 @@
         const nome = document.getElementById('cNome').value.trim();
         if (!nome) return showToast('Nome obrigatório.');
 
-        // coleta grupos
         const grupos = [];
         document.querySelectorAll('#gruposContainer .grupo-input').forEach(input => {
             const v = input.value.trim();
             if (v) grupos.push(v);
         });
-        // ======== PARSER DE TEXTO COLADO ========
-function openPasteModal() {
-    const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-    overlay.id = 'modalPaste';
-    overlay.style.zIndex = '400';
-    overlay.innerHTML = `
-        <div class="modal-sheet">
-            <div class="modal-handle"></div>
-            <div class="modal-content">
-                <h3>📋 Colar Texto</h3>
-                <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:12px;">
-                    Cole o texto com os campos. Exemplo:<br>
-                    <code style="font-size:0.75rem;">Nome:<br>João<br><br>Endereço:<br>R. X, 100<br><br>Código Ifood:<br>1234<br><br>Grupo:<br>Cacau Show<br><br>Valor:<br>9</code>
-                </p>
-                <div class="form-group">
-                    <textarea class="form-textarea" id="pasteTextArea" placeholder="Cole aqui..." style="min-height:220px;font-family:monospace;font-size:0.9rem;"></textarea>
-                </div>
-                <button class="btn btn-primary" onclick="processarTextoColado()">Processar</button>
-                <button class="btn btn-outline" style="margin-top:6px;" onclick="document.getElementById('modalPaste').remove()">Cancelar</button>
-            </div>
-        </div>
-    `;
-    document.body.appendChild(overlay);
-}
 
-function parseClientText(text) {
-    const result = {};
-    const lines = text.split('\n');
-    let currentField = null;
-    let currentValue = [];
-
-    const fieldMap = {
-        'nome': 'nome',
-        'endereço': 'endereco',
-        'endereco': 'endereco',
-        'end.': 'endereco',
-        'rua': 'endereco',
-        'complemento': 'complemento',
-        'compl': 'complemento',
-        'compl.': 'complemento',
-        'telefone': 'telefone',
-        'tel': 'telefone',
-        'tel.': 'telefone',
-        'fone': 'telefone',
-        'celular': 'telefone',
-        'código ifood': 'codigoIfood',
-        'codigo ifood': 'codigoIfood',
-        'cód. ifood': 'codigoIfood',
-        'cod. ifood': 'codigoIfood',
-        'ifood': 'codigoIfood',
-        'código': 'codigoIfood',
-        'codigo': 'codigoIfood',
-        'grupo': 'grupo',
-        'valor': 'valor',
-        'taxa': 'valor',
-        'taxa de entrega': 'valor'
-    };
-
-    const finalize = () => {
-        if (currentField) {
-            result[currentField] = currentValue.join(' ').trim();
-        }
-    };
-
-    for (const rawLine of lines) {
-        const line = rawLine;
-        const match = line.match(/^\s*([^:]+?)\s*:\s*(.*)$/);
-        if (match) {
-            finalize();
-            const label = match[1].trim().toLowerCase();
-            const value = match[2].trim();
-            const field = fieldMap[label];
-            if (field) {
-                currentField = field;
-                currentValue = value ? [value] : [];
-            } else {
-                currentField = null;
-                currentValue = [];
-            }
-        } else if (currentField && line.trim()) {
-            currentValue.push(line.trim());
-        }
-    }
-    finalize();
-    return result;
-}
-
-function processarTextoColado() {
-    const text = document.getElementById('pasteTextArea').value;
-    if (!text.trim()) {
-        showToast('Cole algum texto primeiro.');
-        return;
-    }
-    const data = parseClientText(text);
-
-    // Nome
-    if (data.nome) document.getElementById('cNome').value = data.nome;
-    // Telefone
-    if (data.telefone) document.getElementById('cTel').value = data.telefone;
-    // Código iFood
-    if (data.codigoIfood) document.getElementById('cCodigoIfood').value = data.codigoIfood;
-
-    // Endereço
-    if (data.endereco) {
-        const container = document.getElementById('enderecosContainer');
-        container.innerHTML = '';
-        adicionarEnderecoNovo('Principal', data.endereco, data.complemento || '');
-    }
-
-    // Grupo + valor (taxa)
-    if (data.grupo) {
-        const gruposContainer = document.getElementById('gruposContainer');
-        gruposContainer.innerHTML = '';
-        adicionarGrupoNovo(data.grupo);
-
-        const g = data.grupo.toLowerCase();
-        const valor = parseFloat(data.valor) || 0;
-        if (g.includes('insalata')) {
-            document.getElementById('cTaxaInsalata').value = valor;
-        } else if (g.includes('cacau')) {
-            document.getElementById('cTaxaCacauShow').value = valor;
-        } else {
-            document.getElementById('cTaxa').value = valor;
-        }
-    } else if (data.valor) {
-        document.getElementById('cTaxa').value = parseFloat(data.valor) || 0;
-    }
-
-    document.getElementById('modalPaste').remove();
-    showToast('Dados preenchidos! Revise e salve.');
-            }
-
-        // coleta endereços
         const enderecos = [];
         document.querySelectorAll('#enderecosContainer .list-item').forEach(div => {
             const inputs = div.querySelectorAll('input');
@@ -1073,7 +931,7 @@ function processarTextoColado() {
         closeModal(); showToast('Cliente removido.');
     }
 
-    // ======== AUTOCOMPLETE (genérico para qualquer input com sugestões-lista irmão) ========
+    // ======== AUTOCOMPLETE ========
     function filtrarSugestoesGrupo(input, lista) {
         if (!input || !lista) return;
         const termo = input.value.trim().toLowerCase();
@@ -1103,7 +961,135 @@ function processarTextoColado() {
         }
     });
 
-    // ======== MODAIS DE ENTREGA (sem alteração nos campos, apenas exibindo apelido) ========
+    // ======== PARSER DE TEXTO COLADO ========
+    function openPasteModal() {
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        overlay.id = 'modalPaste';
+        overlay.style.zIndex = '400';
+        overlay.innerHTML = `
+            <div class="modal-sheet">
+                <div class="modal-handle"></div>
+                <div class="modal-content">
+                    <h3>📋 Colar Texto</h3>
+                    <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:12px;">
+                        Cole o texto com os campos. Exemplo:<br>
+                        <code style="font-size:0.75rem;">Nome:<br>João<br><br>Endereço:<br>R. X, 100<br><br>Código Ifood:<br>1234<br><br>Grupo:<br>Cacau Show<br><br>Valor:<br>9</code>
+                    </p>
+                    <div class="form-group">
+                        <textarea class="form-textarea" id="pasteTextArea" placeholder="Cole aqui..." style="min-height:220px;font-family:monospace;font-size:0.9rem;"></textarea>
+                    </div>
+                    <button class="btn btn-primary" onclick="processarTextoColado()">Processar</button>
+                    <button class="btn btn-outline" style="margin-top:6px;" onclick="document.getElementById('modalPaste').remove()">Cancelar</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+    }
+
+    function parseClientText(text) {
+        const result = {};
+        const lines = text.split('\n');
+        let currentField = null;
+        let currentValue = [];
+
+        const fieldMap = {
+            'nome': 'nome',
+            'endereço': 'endereco',
+            'endereco': 'endereco',
+            'end.': 'endereco',
+            'rua': 'endereco',
+            'complemento': 'complemento',
+            'compl': 'complemento',
+            'compl.': 'complemento',
+            'telefone': 'telefone',
+            'tel': 'telefone',
+            'tel.': 'telefone',
+            'fone': 'telefone',
+            'celular': 'telefone',
+            'código ifood': 'codigoIfood',
+            'codigo ifood': 'codigoIfood',
+            'cód. ifood': 'codigoIfood',
+            'cod. ifood': 'codigoIfood',
+            'ifood': 'codigoIfood',
+            'código': 'codigoIfood',
+            'codigo': 'codigoIfood',
+            'grupo': 'grupo',
+            'valor': 'valor',
+            'taxa': 'valor',
+            'taxa de entrega': 'valor'
+        };
+
+        const finalize = () => {
+            if (currentField) {
+                result[currentField] = currentValue.join(' ').trim();
+            }
+        };
+
+        for (const rawLine of lines) {
+            const line = rawLine;
+            const match = line.match(/^\s*([^:]+?)\s*:\s*(.*)$/);
+            if (match) {
+                finalize();
+                const label = match[1].trim().toLowerCase();
+                const value = match[2].trim();
+                const field = fieldMap[label];
+                if (field) {
+                    currentField = field;
+                    currentValue = value ? [value] : [];
+                } else {
+                    currentField = null;
+                    currentValue = [];
+                }
+            } else if (currentField && line.trim()) {
+                currentValue.push(line.trim());
+            }
+        }
+        finalize();
+        return result;
+    }
+
+    function processarTextoColado() {
+        const text = document.getElementById('pasteTextArea').value;
+        if (!text.trim()) {
+            showToast('Cole algum texto primeiro.');
+            return;
+        }
+        const data = parseClientText(text);
+
+        if (data.nome) document.getElementById('cNome').value = data.nome;
+        if (data.telefone) document.getElementById('cTel').value = data.telefone;
+        if (data.codigoIfood) document.getElementById('cCodigoIfood').value = data.codigoIfood;
+
+        if (data.endereco) {
+            const container = document.getElementById('enderecosContainer');
+            container.innerHTML = '';
+            adicionarEnderecoNovo('Principal', data.endereco, data.complemento || '');
+        }
+
+        if (data.grupo) {
+            const gruposContainer = document.getElementById('gruposContainer');
+            gruposContainer.innerHTML = '';
+            adicionarGrupoNovo(data.grupo);
+
+            const g = data.grupo.toLowerCase();
+            const valor = parseFloat(data.valor) || 0;
+            if (g.includes('insalata')) {
+                document.getElementById('cTaxaInsalata').value = valor;
+            } else if (g.includes('cacau')) {
+                document.getElementById('cTaxaCacauShow').value = valor;
+            } else {
+                document.getElementById('cTaxa').value = valor;
+            }
+        } else if (data.valor) {
+            document.getElementById('cTaxa').value = parseFloat(data.valor) || 0;
+        }
+
+        document.getElementById('modalPaste').remove();
+        showToast('Dados preenchidos! Revise e salve.');
+    }
+
+    // ======== MODAIS DE ENTREGA ========
     function openNewEntregaModal() {
         let opts = allClients.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
         showModal(`
@@ -1111,9 +1097,6 @@ function processarTextoColado() {
                 <h3>Nova Entrega</h3>
                 <div class="form-group"><label class="form-label">Cliente</label>
                     <select class="form-input" id="selCliente" onchange="preencherTaxa()">${opts}</select>
-                </div>
-                <div class="form-group"><label class="form-label">Endereço</label>
-                    <select class="form-input" id="selEndereco"><option value="residencial">Residencial</option><option value="trabalho">Trabalho</option></select>
                 </div>
                 <div class="form-group"><label class="form-label">Taxa de Entrega (R$)</label><input class="form-input" type="number" step="0.01" id="taxaValor" value="0"></div>
                 <div class="form-group">
@@ -1155,7 +1138,6 @@ function processarTextoColado() {
         if (!sel || !taxaInput) return;
         const cliente = allClients.find(c => c.id === sel.value);
         if (cliente) {
-            // usa o primeiro grupo para preencher (na edição manual não há escolha)
             const grupo = (cliente.grupos || [])[0] || '';
             let taxa = cliente.taxaEntrega || 0;
             if (grupo.includes('Insalata') && cliente.taxaInsalata != null) taxa = cliente.taxaInsalata;
@@ -1211,7 +1193,6 @@ function processarTextoColado() {
         const troco = (statusPgto === 'apagar' && forma === 'dinheiro') ? (document.getElementById('trocoNew')?.value || '') : '';
 
         const maxOrdem = allEntregas.reduce((max, e) => Math.max(max, e.ordem || 0), 0);
-        // para entrega manual, usa o primeiro endereço e primeiro grupo
         const endereco = (cliente.enderecos || [])[0] || {};
         const grupo = (cliente.grupos || [])[0] || '';
         await db.collection('users').doc(currentUser.uid).collection('entregas').add({
