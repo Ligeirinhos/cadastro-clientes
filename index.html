@@ -90,8 +90,6 @@
             border-left: 4px solid var(--border);
             position: relative;
         }
-        .entrega-row.apagar { border-left-color: #ffc107; }
-        .entrega-row.pago { border-left-color: #4caf50; }
 
         .checkbox { width:20px; height:20px; accent-color: var(--accent); flex-shrink:0; }
         .info { flex:1; min-width:0; }
@@ -100,8 +98,6 @@
         .badge { font-size:0.7rem; padding:2px 8px; border-radius:12px; font-weight:600; }
         .badge-pendente { background:#fff3cd; color:#856404; }
         .badge-entregue { background:#d4edda; color:#155724; }
-        .badge-pago { background:#d4edda; color:#155724; }
-        .badge-apagar { background:#ffeeba; color:#856404; }
 
         .fab {
             position:fixed; bottom:24px; right:24px;
@@ -137,7 +133,6 @@
             background: var(--accent); color: var(--accent-text); padding:10px 22px; border-radius:20px;
             font-size:0.85rem; z-index:500;
         }
-        .info-troco { font-size:0.8rem; color: var(--accent); margin-top:4px; }
 
         .seta-ordenacao {
             display: flex; flex-direction: column; gap: 4px; margin-left: 8px;
@@ -280,7 +275,6 @@
         return client;
     }
 
-    // Remove acentos e normaliza para comparação
     function normalizar(str) {
         if (!str) return '';
         return str.toString()
@@ -511,10 +505,6 @@
                 apelidoEndereco: sel.endereco.apelido || '',
                 enderecoSelecionado: sel.endereco.apelido || '',
                 valor: sel.taxa,
-                totalPedido: 0,
-                pagamento: 'dinheiro',
-                troco: '',
-                statusPagamento: 'apagar',
                 status: 'pendente',
                 data: hoje,
                 criadoEm: criadoEm,
@@ -635,27 +625,15 @@
 
         [...filteredPendentes, ...filteredEntregues].forEach((e, index) => {
             const addr = e.endereco || '';
-            const pagStatus = e.statusPagamento==='pago' ? 'Pago' : 'A pagar';
-            const classeStatus = e.statusPagamento==='pago' ? 'pago' : 'apagar';
-            const badgeClass = e.statusPagamento==='pago' ? 'badge-pago' : 'badge-apagar';
             const taxa = parseFloat(e.valor||0).toFixed(2);
-            const totalPedido = parseFloat(e.totalPedido||0).toFixed(2);
-            let pagInfo = '';
-            if (e.statusPagamento === 'pago') {
-                pagInfo = 'Pago';
-            } else {
-                pagInfo = `${e.pagamento || '?'} · <span class="badge ${badgeClass}">${pagStatus}</span>`;
-            }
-            const totalCobrar = e.statusPagamento==='apagar' ? totalPedido : '0.00';
 
             html += `
-                <div class="entrega-row ${classeStatus}">
+                <div class="entrega-row">
                     <input type="checkbox" class="entrega-checkbox" data-id="${e.id}" ${e.status==='entregue'?'disabled':''}>
                     <div class="info" onclick="openEditEntregaModal('${e.id}')">
                         <div class="name">${e.nome} <span class="badge badge-${e.status}">${e.status}</span></div>
                         <div class="detail">${addr} (${e.grupo || 'sem grupo'})</div>
-                        <div class="detail">Taxa: R$ ${taxa} ${e.statusPagamento==='apagar' ? '· Total Pedido: R$ ' + totalPedido : ''} · ${pagInfo}</div>
-                        <div class="detail" style="font-weight:bold;">Cobrar: R$ ${totalCobrar}</div>
+                        <div class="detail" style="font-weight:bold;">Taxa: R$ ${taxa}</div>
                     </div>
                     ${e.status === 'pendente' ? `
                     <div class="seta-ordenacao">
@@ -813,7 +791,6 @@
             }
         });
 
-        // ===== VALIDAÇÃO DE DUPLICIDADE (ignora acentos e maiúsculas) =====
         const nomeNorm = normalizar(nome);
         let duplicataExata = null;
         let mesmoNomeOutroEndereco = null;
@@ -847,7 +824,6 @@
             );
             if (!confirmar) return;
         }
-        // ===== FIM DA VALIDAÇÃO =====
 
         await db.collection('users').doc(currentUser.uid).collection('clients').add({
             nome,
@@ -1146,36 +1122,11 @@
                     <select class="form-input" id="selCliente" onchange="preencherTaxa()">${opts}</select>
                 </div>
                 <div class="form-group"><label class="form-label">Taxa de Entrega (R$)</label><input class="form-input" type="number" step="0.01" id="taxaValor" value="0"></div>
-                <div class="form-group">
-                    <label class="form-label">Status Pagamento</label>
-                    <select class="form-input" id="statusPagamentoNew" onchange="toggleCamposPagamentoNew()">
-                        <option value="apagar">A pagar</option>
-                        <option value="pago">Pago</option>
-                    </select>
-                </div>
-                <div id="grupoTotalPedidoNew" style="display:block">
-                    <div class="form-group"><label class="form-label">Total do Pedido (R$)</label><input class="form-input" type="number" step="0.01" id="totalPedidoNew" value="0"></div>
-                </div>
-                <div id="grupoFormaPgtoNew">
-                    <div class="form-group"><label class="form-label">Forma de Pagamento</label>
-                        <select class="form-input" id="formaPgtoNew" onchange="toggleTrocoNew()">
-                            <option value="dinheiro">Dinheiro</option>
-                            <option value="maquininha">Maquininha</option>
-                            <option value="pix">Pix</option>
-                        </select>
-                    </div>
-                    <div class="form-group" id="grupoTrocoNew" style="display:block">
-                        <label class="form-label">Troco (R$)</label>
-                        <input class="form-input" type="number" step="0.01" id="trocoNew" value="" oninput="atualizarInfoTrocoNew()">
-                        <div id="infoTrocoNew" class="info-troco"></div>
-                    </div>
-                </div>
                 <button class="btn btn-primary" onclick="saveNovaEntrega()">Salvar Entrega</button>
                 <button class="btn btn-outline" style="margin-top:6px;" onclick="closeModal()">Cancelar</button>
             </div>`);
         setTimeout(() => {
             preencherTaxa();
-            toggleCamposPagamentoNew();
         }, 100);
     }
 
@@ -1193,51 +1144,13 @@
         }
     }
 
-    function toggleCamposPagamentoNew() {
-        const status = document.getElementById('statusPagamentoNew')?.value;
-        const grupoTotal = document.getElementById('grupoTotalPedidoNew');
-        const grupoForma = document.getElementById('grupoFormaPgtoNew');
-        if (grupoTotal) grupoTotal.style.display = status === 'apagar' ? 'block' : 'none';
-        if (grupoForma) grupoForma.style.display = status === 'apagar' ? 'block' : 'none';
-        if (status === 'pago') {
-            const info = document.getElementById('infoTrocoNew');
-            if (info) info.textContent = '';
-        } else {
-            toggleTrocoNew();
-        }
-    }
-
-    function toggleTrocoNew() {
-        const forma = document.getElementById('formaPgtoNew')?.value;
-        const grupoTroco = document.getElementById('grupoTrocoNew');
-        if (grupoTroco) grupoTroco.style.display = forma === 'dinheiro' ? 'block' : 'none';
-        atualizarInfoTrocoNew();
-    }
-
-    function atualizarInfoTrocoNew() {
-        const totalPedido = parseFloat(document.getElementById('totalPedidoNew')?.value) || 0;
-        const troco = parseFloat(document.getElementById('trocoNew')?.value) || 0;
-        const info = document.getElementById('infoTrocoNew');
-        if (info) {
-            if (troco > 0 && document.getElementById('formaPgtoNew')?.value === 'dinheiro') {
-                info.textContent = `💰 Cobrar R$ ${totalPedido.toFixed(2)}, levar troco de R$ ${troco.toFixed(2)}`;
-            } else {
-                info.textContent = '';
-            }
-        }
-    }
-
     async function saveNovaEntrega() {
         const cid = document.getElementById('selCliente').value;
         const cliente = allClients.find(c=>c.id===cid);
         if (!cliente) return;
         const hoje = new Date().toISOString().slice(0,10);
         const criadoEm = new Date().toISOString();
-        const statusPgto = document.getElementById('statusPagamentoNew').value;
         const taxa = parseFloat(document.getElementById('taxaValor').value)||0;
-        const totalPedido = statusPgto === 'apagar' ? (parseFloat(document.getElementById('totalPedidoNew')?.value)||0) : 0;
-        const forma = statusPgto === 'pago' ? '' : document.getElementById('formaPgtoNew').value;
-        const troco = (statusPgto === 'apagar' && forma === 'dinheiro') ? (document.getElementById('trocoNew')?.value || '') : '';
 
         const maxOrdem = allEntregas.reduce((max, e) => Math.max(max, e.ordem || 0), 0);
         const endereco = (cliente.enderecos || [])[0] || {};
@@ -1250,10 +1163,6 @@
             complemento: endereco.complemento || '',
             apelidoEndereco: endereco.apelido || '',
             valor: taxa,
-            totalPedido: totalPedido,
-            pagamento: forma,
-            troco: troco,
-            statusPagamento: statusPgto,
             status: 'pendente',
             data: hoje,
             criadoEm: criadoEm,
@@ -1265,11 +1174,6 @@
 
     function openEditEntregaModal(id) {
         const e = allEntregas.find(e=>e.id===id); if (!e) return;
-        const statusPgto = e.statusPagamento || 'apagar';
-        const displayForma = statusPgto === 'apagar' ? 'block' : 'none';
-        const displayTroco = (statusPgto === 'apagar' && e.pagamento === 'dinheiro') ? 'block' : 'none';
-        const displayTotalPedido = statusPgto === 'apagar' ? 'block' : 'none';
-        const infoTroco = (displayTroco === 'block' && e.troco) ? `💰 Cobrar R$ ${(parseFloat(e.totalPedido)||0).toFixed(2)}, levar troco de R$ ${parseFloat(e.troco).toFixed(2)}` : '';
 
         showModal(`
             <div class="modal-handle"></div><div class="modal-content">
@@ -1281,82 +1185,16 @@
                     <input class="form-input" value="${e.grupo || ''}" readonly style="background:var(--input-bg);">
                 </div>
                 <div class="form-group"><label class="form-label">Taxa de Entrega (R$)</label><input class="form-input" type="number" step="0.01" id="editTaxa" value="${e.valor||0}"></div>
-                <div class="form-group">
-                    <label class="form-label">Status Pagamento</label>
-                    <select class="form-input" id="editStatusPagamento" onchange="toggleCamposPagamentoEdit()">
-                        <option value="apagar" ${statusPgto==='apagar'?'selected':''}>A pagar</option>
-                        <option value="pago" ${statusPgto==='pago'?'selected':''}>Pago</option>
-                    </select>
-                </div>
-                <div id="grupoTotalPedidoEdit" style="display:${displayTotalPedido}">
-                    <div class="form-group"><label class="form-label">Total do Pedido (R$)</label><input class="form-input" type="number" step="0.01" id="editTotalPedido" value="${e.totalPedido||0}" oninput="atualizarInfoTrocoEdit()"></div>
-                </div>
-                <div id="grupoFormaPgtoEdit" style="display:${displayForma}">
-                    <div class="form-group"><label class="form-label">Forma de Pagamento</label>
-                        <select class="form-input" id="editFormaPgto" onchange="toggleTrocoEdit()">
-                            <option value="dinheiro" ${e.pagamento==='dinheiro'?'selected':''}>Dinheiro</option>
-                            <option value="maquininha" ${e.pagamento==='maquininha'?'selected':''}>Maquininha</option>
-                            <option value="pix" ${e.pagamento==='pix'?'selected':''}>Pix</option>
-                        </select>
-                    </div>
-                    <div class="form-group" id="grupoTrocoEdit" style="display:${displayTroco}">
-                        <label class="form-label">Troco (R$)</label>
-                        <input class="form-input" type="number" step="0.01" id="editTroco" value="${e.troco||''}" oninput="atualizarInfoTrocoEdit()">
-                        <div id="infoTrocoEdit" class="info-troco">${infoTroco}</div>
-                    </div>
-                </div>
                 <button class="btn btn-primary" onclick="updateEntrega('${id}')">Salvar</button>
                 <button class="btn btn-danger" style="margin-top:6px;" onclick="deleteEntrega('${id}')">Excluir</button>
                 <button class="btn btn-outline" style="margin-top:6px;" onclick="closeModal()">Cancelar</button>
             </div>`);
     }
 
-    function toggleCamposPagamentoEdit() {
-        const status = document.getElementById('editStatusPagamento')?.value;
-        const grupoTotal = document.getElementById('grupoTotalPedidoEdit');
-        const grupoForma = document.getElementById('grupoFormaPgtoEdit');
-        if (grupoTotal) grupoTotal.style.display = status === 'apagar' ? 'block' : 'none';
-        if (grupoForma) grupoForma.style.display = status === 'apagar' ? 'block' : 'none';
-        if (status === 'pago') {
-            const info = document.getElementById('infoTrocoEdit');
-            if (info) info.textContent = '';
-        } else {
-            toggleTrocoEdit();
-        }
-    }
-
-    function toggleTrocoEdit() {
-        const forma = document.getElementById('editFormaPgto')?.value;
-        const grupoTroco = document.getElementById('grupoTrocoEdit');
-        if (grupoTroco) grupoTroco.style.display = forma === 'dinheiro' ? 'block' : 'none';
-        atualizarInfoTrocoEdit();
-    }
-
-    function atualizarInfoTrocoEdit() {
-        const totalPedido = parseFloat(document.getElementById('editTotalPedido')?.value) || 0;
-        const troco = parseFloat(document.getElementById('editTroco')?.value) || 0;
-        const info = document.getElementById('infoTrocoEdit');
-        if (info) {
-            if (troco > 0 && document.getElementById('editFormaPgto')?.value === 'dinheiro' && document.getElementById('editStatusPagamento')?.value === 'apagar') {
-                info.textContent = `💰 Cobrar R$ ${totalPedido.toFixed(2)}, levar troco de R$ ${troco.toFixed(2)}`;
-            } else {
-                info.textContent = '';
-            }
-        }
-    }
-
     async function updateEntrega(id) {
-        const statusPgto = document.getElementById('editStatusPagamento').value;
         const taxa = parseFloat(document.getElementById('editTaxa').value)||0;
-        const totalPedido = statusPgto === 'apagar' ? (parseFloat(document.getElementById('editTotalPedido')?.value)||0) : 0;
-        const forma = statusPgto === 'pago' ? '' : document.getElementById('editFormaPgto').value;
-        const troco = (statusPgto === 'apagar' && forma === 'dinheiro') ? (document.getElementById('editTroco')?.value || '') : '';
         await db.collection('users').doc(currentUser.uid).collection('entregas').doc(id).update({
-            valor: taxa,
-            totalPedido: totalPedido,
-            pagamento: forma,
-            troco: troco,
-            statusPagamento: statusPgto
+            valor: taxa
         });
         closeModal(); showToast('Entrega atualizada!');
     }
