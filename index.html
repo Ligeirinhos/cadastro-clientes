@@ -280,6 +280,17 @@
         return client;
     }
 
+    // Remove acentos e normaliza para comparação
+    function normalizar(str) {
+        if (!str) return '';
+        return str.toString()
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .trim()
+            .replace(/\s+/g, ' ');
+    }
+
     auth.onAuthStateChanged(user => {
         currentUser = user;
         if (user) {
@@ -403,16 +414,16 @@
             filtered = filtered.filter(c => (c.grupos || []).includes(selectedGroupClientes));
         }
         if (search.trim()) {
-            const s = search.trim().toLowerCase();
+            const s = normalizar(search);
             filtered = filtered.filter(c => 
-                (c.nome && c.nome.toLowerCase().includes(s)) ||
-                (c.telefone && c.telefone.includes(s)) ||
-                (c.grupos && c.grupos.some(g => g.toLowerCase().includes(s))) ||
+                (c.nome && normalizar(c.nome).includes(s)) ||
+                (c.telefone && c.telefone.includes(search.trim())) ||
+                (c.grupos && c.grupos.some(g => normalizar(g).includes(s))) ||
                 (c.enderecos && c.enderecos.some(e => 
-                    (e.endereco && e.endereco.toLowerCase().includes(s)) ||
-                    (e.apelido && e.apelido.toLowerCase().includes(s))
+                    (e.endereco && normalizar(e.endereco).includes(s)) ||
+                    (e.apelido && normalizar(e.apelido).includes(s))
                 )) ||
-                (c.codigoIfood && c.codigoIfood.toLowerCase().includes(s))
+                (c.codigoIfood && c.codigoIfood.includes(search.trim()))
             );
         }
         if (filtered.length===0) html += `<div style="text-align:center;color:var(--text-secondary);">Nenhum cliente.</div>`;
@@ -801,6 +812,42 @@
                 enderecos.push({ apelido, endereco, complemento });
             }
         });
+
+        // ===== VALIDAÇÃO DE DUPLICIDADE (ignora acentos e maiúsculas) =====
+        const nomeNorm = normalizar(nome);
+        let duplicataExata = null;
+        let mesmoNomeOutroEndereco = null;
+
+        for (const cliente of allClients) {
+            if (normalizar(cliente.nome || '') === nomeNorm) {
+                const enderecoCoincide = enderecos.some(novoEnd =>
+                    (cliente.enderecos || []).some(endExist =>
+                        normalizar(endExist.endereco) === normalizar(novoEnd.endereco)
+                    )
+                );
+                if (enderecoCoincide) {
+                    duplicataExata = cliente;
+                    break;
+                } else if (!mesmoNomeOutroEndereco) {
+                    mesmoNomeOutroEndereco = cliente;
+                }
+            }
+        }
+
+        if (duplicataExata) {
+            showToast('⚠️ Cliente já cadastrado (mesmo nome e endereço).');
+            return;
+        }
+
+        if (mesmoNomeOutroEndereco) {
+            const confirmar = confirm(
+                `Já existe um cliente chamado "${nome}".\n\n` +
+                `Se for a mesma pessoa com outro endereço, use apelidos como "Trabalho" ou "Casa 2".\n\n` +
+                `Deseja continuar mesmo assim?`
+            );
+            if (!confirmar) return;
+        }
+        // ===== FIM DA VALIDAÇÃO =====
 
         await db.collection('users').doc(currentUser.uid).collection('clients').add({
             nome,
